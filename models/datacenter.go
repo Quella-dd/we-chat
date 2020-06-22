@@ -2,10 +2,14 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 	"time"
+	"webchat/common"
+	"webchat/database"
 
 	"github.com/docker/docker/pkg/pubsub"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 )
 
 var (
@@ -18,58 +22,54 @@ type DataManager struct {
 }
 
 type Message struct {
-	Source      string `form:"source"`
-	RoomID      *string
-	Destination string `form:"destination"`
-	Body        string `form:"body"`
-}
+	gorm.Model
 
-type TestMessage struct {
-	SourceName string `form:"SourceName"`
-	Content    string `form:"content"`
+	SourceID int `form:"SourceID"`
+	RoomID   *string
+	DestID   int         `form:"DestID"`
+	Body     string `form:"body"`
 }
 
 func NewDataManager() *DataManager {
+	database.DB.AutoMigrate(&Message{})
 	return &DataManager{
 		Publisher: pubsub.NewPublisher(timeout, buffer),
 	}
 }
 
-func (dm *DataManager) HandlerMessage(ctx *gin.Context) {
-	var msg TestMessage
-	ctx.Request.ParseForm()
-
+// HandlerMessage save and send
+func (dataManager *DataManager) HandlerMessage(ctx *gin.Context, userID string) {
+	var msg Message
 	if err := ctx.ShouldBind(&msg); err != nil {
 		fmt.Println("parse error", err)
 	} else {
-		if ws, ok := ManageEnv.WebsocketManager.Connects[msg.SourceName]; ok {
-			ws.WriteJSON(msg.Content)
+		// save
+		msg.SourceID, _ = strconv.Atoi(userID)
+		if err := dataManager.SaveMessage(&msg); err != nil {
+			fmt.Println("save message error:", err)
+		}
+
+		// send
+		if ws, ok := ManageEnv.WebsocketManager.Connects[strconv.Itoa(msg.SourceID)]; ok {
+			ws.WriteJSON(msg.Body)
 		} else {
 			fmt.Println("not found ws")
 		}
 	}
-
-	// if msg, err := parseMessage(ctx); err != nil {
-	// 	dm.Publisher.Publish(msg)
-	// }
-
-	// if msg, err := parseMessage(ctx); err != nil {
-	// 	fmt.Println(err)
-	// } else {
-	// 	fmt.Println(msg)
-
-	// 	if msg.RoomID == nil {
-	// 		if ws, ok := ManageEnv.WebsocketManager.Connes[msg.Destination]; ok {
-	// 			ws.WriteJSON(msg)
-	// 		}
-	// 	}
-	// }
 }
 
-func parseMessage(ctx *gin.Context) (*Message, error) {
-	var msg Message
-	if err := ctx.ShouldBind(&msg); err != nil {
-		return nil, err
+func (dataManager *DataManager) SaveMessage(msg *Message) error {
+	if err := database.DB.Create(msg).Error; err != nil {
+		return err
 	}
-	return &msg, nil
+	return nil
+}
+
+func (*DataManager) GetMessage(ctx *gin.Context, userID string) error {
+	var messages []*Message
+	if err := database.DB.Find(&messages, userID).Error; err != nil {
+		return err
+	}
+	common.HttpSuccessResponse(ctx, messages)
+	return nil
 }

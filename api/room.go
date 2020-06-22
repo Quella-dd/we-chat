@@ -47,7 +47,7 @@ func GetRoom(ctx *gin.Context) {
 }
 
 func DeleteRoom(ctx *gin.Context) {
-	roomID := ctx.Param("id")
+	roomID := ctx.Param("name")
 	if err := models.ManageEnv.RoomManager.DeleteRoom(roomID); err != nil {
 		ctx.JSON(500, err)
 	}

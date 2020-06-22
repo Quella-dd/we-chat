@@ -78,6 +78,98 @@ func (userManager *UserManager) GetUser(ctx *gin.Context, userID string) {
 	common.HttpSuccessResponse(ctx, user)
 }
 
+func (userManager *UserManager) JoinRoom(userID, roomID string) error {
+	user, err := userManager.getUser(userID)
+	if err != nil {
+		return err
+	}
+
+	room, err := ManageEnv.RoomManager.GetRoom(roomID)
+	if err != nil {
+		return err
+	}
+
+	if room.Childrens != nil {
+		room.Childrens = append(room.Childrens, *user)
+	} else {
+		room.Childrens = []User{*user}
+	}
+	if err := database.DB.Model(&room).Update("childrens", room.Childrens).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (userManager *UserManager) LeaveRoom(userID, roomID string) error {
+	_, err := userManager.getUser(userID)
+	if err != nil {
+		return err
+	}
+
+	room, err := ManageEnv.RoomManager.GetRoom(roomID)
+	if err != nil {
+		return err
+	}
+
+	if room.Childrens != nil {
+		room.filterChilds(userID)
+	} else {
+		return errors.New("this user is not in this room")
+	}
+	if err := database.DB.Model(&room).Update("childrens", room.Childrens).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (userManager *UserManager) DeleteFromRoom(excuteUserID, roomID, userID string) error {
+	_, err := userManager.getUser(userID)
+	if err != nil {
+		return err
+	}
+
+	room, err := ManageEnv.RoomManager.GetRoom(roomID)
+	if err != nil {
+		return err
+	}
+
+	if room.ManagerID == excuteUserID {
+		room.filterChilds(userID)
+		if err := database.DB.Model(&room).Update("childrens", room.Childrens).Error; err != nil {
+			return err
+		}
+	} else {
+		return errors.New("not allow to delte user from Room")
+	}
+	return nil
+}
+
+func (userManager *UserManager) AddUserToRoom(excuteUserID, roomID, userID string) error {
+	user, err := userManager.getUser(userID)
+	if err != nil {
+		return err
+	}
+
+	room, err := ManageEnv.RoomManager.GetRoom(roomID)
+	if err != nil {
+		return err
+	}
+
+	if room.ManagerID == excuteUserID {
+		if room.Childrens != nil {
+			room.Childrens = append(room.Childrens, *user)
+		} else {
+			room.Childrens = []User{*user}
+		}
+		if err := database.DB.Model(&room).Update("childrens", room.Childrens).Error; err != nil {
+			return err
+		}
+	} else {
+		return errors.New("not allow to delte user from Room")
+	}
+	return nil
+}
+
 func (*UserManager) getUser(userID string) (*User, error) {
 	var users []*User
 	if err := database.DB.Where("id = ?", userID).Or("name = ?", userID).Find(&users).Error; err != nil {
@@ -88,3 +180,4 @@ func (*UserManager) getUser(userID string) (*User, error) {
 	}
 	return nil, errors.New("record not found")
 }
+

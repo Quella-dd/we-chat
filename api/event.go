@@ -12,5 +12,11 @@ func HandlerEvent(ctx *gin.Context) {
 }
 
 func HandlerMessage(ctx *gin.Context) {
-	models.ManageEnv.DataManager.HandlerMessage(ctx)
+	userID := ctx.Request.Header.Get("userID")
+	models.ManageEnv.DataManager.HandlerMessage(ctx, userID)
+}
+
+func GetMessage(ctx *gin.Context) {
+	userID := ctx.Request.Header.Get("userID")
+	models.ManageEnv.DataManager.GetMessage(ctx, userID)
 }

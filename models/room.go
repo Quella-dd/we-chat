@@ -1,6 +1,8 @@
 package models
 
 import (
+	"errors"
+	"strconv"
 	"webchat/database"
 
 	"github.com/gin-gonic/gin"
@@ -13,7 +15,8 @@ type Room struct {
 	gorm.Model
 	Name        string `form:"name"`
 	ManagerID   string
-	Description string
+	Description string `form:"description"`
+	Childrens   RelationUsers `sql:"TYPE:json"`
 }
 
 func NewRoomManager() *RoomManager {
@@ -62,6 +65,20 @@ func (*RoomManager) DeleteRoom(id string) error {
 	if err := database.DB.First(&room, id).Error; err != nil {
 		return err
 	}
-	database.DB.Unscoped().Delete(&room)
+
+	if room.ManagerID == id {
+		database.DB.Unscoped().Delete(&room)
+	} else {
+		return errors.New("this user is not allow to delet this room")
+	}
 	return nil
+}
+
+
+func (r *Room) filterChilds (id string) {
+	for i, user := range r.Childrens {
+		if strconv.Itoa(int(user.ID)) == id {
+			r.Childrens =  append(r.Childrens[:i], r.Childrens[i+1:]...)
+		}
+	}
 }

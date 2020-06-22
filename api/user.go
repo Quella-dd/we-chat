@@ -30,9 +30,37 @@ func GetUser(ctx *gin.Context) {
 }
 
 func JoinRoom(ctx *gin.Context) {
-
+	userID := ctx.Param("id")
+	roomID := ctx.Param("name")
+	if err := models.ManageEnv.UserManager.JoinRoom(userID, roomID); err != nil {
+		ctx.JSON(500, err)
+	}
 }
 
 func LeaveRoom(ctx *gin.Context) {
+	userID := ctx.Param("id")
+	roomID := ctx.Param("name")
+	if err := models.ManageEnv.UserManager.LeaveRoom(userID, roomID); err != nil {
+		ctx.JSON(500, err)
+	}
+}
 
+func RemoveFromRoom(ctx *gin.Context) {
+	excuteUserID := ctx.GetHeader("userID")
+
+	roomID := ctx.Param("id")
+	userID := ctx.Param("name")
+	if err := models.ManageEnv.UserManager.DeleteFromRoom(excuteUserID, roomID, userID); err != nil {
+		ctx.JSON(500, err)
+	}
+}
+
+func AddUserToRoom(ctx *gin.Context) {
+	excuteUserID := ctx.GetHeader("userID")
+
+	roomID := ctx.Param("id")
+	userID := ctx.Param("name")
+	if err := models.ManageEnv.UserManager.AddUserToRoom(excuteUserID, roomID, userID); err != nil {
+		ctx.JSON(500, err)
+	}
 }

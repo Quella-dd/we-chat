@@ -1,6 +1,8 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -21,17 +23,39 @@ type DataManager struct {
 	Publisher *pubsub.Publisher
 }
 
-type Message struct {
-	gorm.Model
-
+type MessageRequest struct {
 	SourceID int `form:"SourceID"`
 	RoomID   *string
-	DestID   int         `form:"DestID"`
+	DestID   int    `form:"DestID"`
 	Body     string `form:"body"`
 }
 
+type MessageResponse struct {
+	gorm.Model
+
+	SourceID int
+	RoomID   *string
+	DestID   int
+	Body     MessagesBody ` sql:"TYPE:json"`
+}
+
+type MessagesBody []MesageBody
+
+type MesageBody struct {
+	Content string
+}
+
+func (msg MessagesBody) Value() (driver.Value, error) {
+	b, err := json.Marshal(msg)
+	return string(b), err
+}
+
+func (msg *MessagesBody) Scan(input interface{}) error {
+	return json.Unmarshal(input.([]byte), msg)
+}
+
 func NewDataManager() *DataManager {
-	database.DB.AutoMigrate(&Message{})
+	database.DB.AutoMigrate(&MessageResponse{})
 	return &DataManager{
 		Publisher: pubsub.NewPublisher(timeout, buffer),
 	}
@@ -39,12 +63,13 @@ func NewDataManager() *DataManager {
 
 // HandlerMessage save and send
 func (dataManager *DataManager) HandlerMessage(ctx *gin.Context, userID string) {
-	var msg Message
+	var msg MessageRequest
 	if err := ctx.ShouldBind(&msg); err != nil {
 		fmt.Println("parse error", err)
 	} else {
 		// save
 		msg.SourceID, _ = strconv.Atoi(userID)
+
 		if err := dataManager.SaveMessage(&msg); err != nil {
 			fmt.Println("save message error:", err)
 		}
@@ -58,16 +83,34 @@ func (dataManager *DataManager) HandlerMessage(ctx *gin.Context, userID string) 
 	}
 }
 
-func (dataManager *DataManager) SaveMessage(msg *Message) error {
-	if err := database.DB.Create(msg).Error; err != nil {
-		return err
+func (dataManager *DataManager) SaveMessage(msg *MessageRequest) error {
+	var message MessageResponse
+	if err := database.DB.Where("source_id = ? and dest_id = ?", msg.SourceID, msg.DestID).Find(&message).Error; err != nil {
+		message.SourceID = msg.SourceID
+		message.DestID = msg.DestID
+		message.Body = []MesageBody{
+			MesageBody{Content: msg.Body},
+		}
+
+		if err := database.DB.Create(&message).Error; err != nil {
+			return err
+		}
+	} else {
+		message.Body = append(message.Body, MesageBody{
+			Content: msg.Body,
+		})
+
+		if err := database.DB.Model(&message).Update("body", message.Body).Error; err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (*DataManager) GetMessage(ctx *gin.Context, userID string) error {
-	var messages []*Message
-	if err := database.DB.Find(&messages, userID).Error; err != nil {
+func (*DataManager) GetMessage(ctx *gin.Context, userID, destID string) error {
+	var messages []*MessageResponse
+
+	if err := database.DB.Where("source_id = ? and dest_id = ?", userID, destID).Find(&messages).Error; err != nil {
 		return err
 	}
 	common.HttpSuccessResponse(ctx, messages)

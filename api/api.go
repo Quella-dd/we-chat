@@ -30,6 +30,8 @@ var routers = []*router{
 	//{method: http.MethodPost, path: "/room/:name", handler: UpdateRoom},
 	//{method: http.MethodDelete, path: "/room/:name", handler: DeleteRoom},
 
+	{method: http.MethodGet, path: "/search/users/:name", handler: SearchUsers},
+
 	{method: http.MethodGet, path: "/friends/:id", handler: GetFriends},
 	{method: http.MethodPost, path: "/friends/:id", handler: AddFriend},
 	{method: http.MethodDelete, path: "/friends/:id", handler: DeleteFriend},
@@ -37,7 +39,7 @@ var routers = []*router{
 	{method: http.MethodPost, path: "/sendMessage", handler: HandlerMessage},
 	{method: http.MethodGet, path: "/event", handler: HandlerEvent},
 
-	{method: http.MethodGet, path: "/messages", handler: GetMessage},
+	{method: http.MethodGet, path: "/messages/:id", handler: GetMessage},
 }
 
 func InitRouter() {

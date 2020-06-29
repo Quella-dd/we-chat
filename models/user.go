@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"webchat/common"
 	"webchat/database"
 
@@ -170,6 +171,30 @@ func (userManager *UserManager) AddUserToRoom(excuteUserID, roomID, userID strin
 	return nil
 }
 
+func (userManager *UserManager) SearchUsers(ctx *gin.Context, name string) interface{} {
+	var objects = struct {
+		Users []User
+		Rooms []Room
+	}{}
+
+	var (
+		users []User
+		rooms []Room
+	)
+
+	if err := database.DB.Where("id like?", "%"+name+"%").Or("name like ?", "%"+name+"%").Find(&users).Error; err != nil {
+		fmt.Println("users sql not record")
+	}
+
+	if err := database.DB.Where("name like ?", "%"+name+"%").Find(&rooms).Error; err != nil {
+		fmt.Println("room sql not record")
+	}
+
+	objects.Users = users
+	objects.Rooms = rooms
+	return objects
+}
+
 func (*UserManager) getUser(userID string) (*User, error) {
 	var users []*User
 	if err := database.DB.Where("id = ?", userID).Or("name = ?", userID).Find(&users).Error; err != nil {
@@ -180,4 +205,3 @@ func (*UserManager) getUser(userID string) (*User, error) {
 	}
 	return nil, errors.New("record not found")
 }
-

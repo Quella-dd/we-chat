@@ -64,3 +64,13 @@ func AddUserToRoom(ctx *gin.Context) {
 		ctx.JSON(500, err)
 	}
 }
+
+func SearchUsers(ctx *gin.Context) {
+	name := ctx.Param("name")
+	if name == "" {
+		common.HttpBadRequest(ctx)
+		return
+	}
+	obj := models.ManageEnv.UserManager.SearchUsers(ctx, name)
+	ctx.JSON(200, obj)
+}

@@ -18,5 +18,6 @@ func HandlerMessage(ctx *gin.Context) {
 
 func GetMessage(ctx *gin.Context) {
 	userID := ctx.Request.Header.Get("userID")
-	models.ManageEnv.DataManager.GetMessage(ctx, userID)
+	destID := ctx.Param("id")
+	models.ManageEnv.DataManager.GetMessage(ctx, userID, destID)
 }

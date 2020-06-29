@@ -58,7 +58,6 @@ func (r *RelationShipManager) AddFriend(ctx *gin.Context, userID string, id stri
 			}
 		}
 		result.RelationShip = append(result.RelationShip, *user)
-		// database.DB.Model(&result).Where("user_id = ?", retID).Update("relation_ship", result.RelationShip)
 		database.DB.Model(&result).Update("relation_ship", result.RelationShip)
 	} else {
 		result = &RelationShips{

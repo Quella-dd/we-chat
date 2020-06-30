@@ -1,0 +1,31 @@
+1、数据中心：
+    a. 数据中心包括数据下发和数据持久化
+    b. 数据持久化分为两部分，分别是　已接受数据存储 和 离线数据存储
+    c. 离线数据存储利用redis数据进行存储，如果接受者处于离线状态，数据分别存储于 数据库和离线数据存储
+    d. 当用户上线时，直接让离线数据存储推数据到用户页面，并根据该数据作为未读数据
+
+TODO:
+     1、  利用redis存储线上用户信息，以及保存离线消息
+     2、  心跳： 客户端每隔时间段上报自己的状态，如果超时，则服务端认为客户端离线, 并且将存储在redis中的用户信息进行删除
+     3、 用于保存用户离线消息， 当用户上线时，推送相应的离线数据
+
+     当用户上线时，对每个用户添加一个UUID, 将这个UUID作为key保存在redis中，并且将websocket connect保存在缓存中
+
+数据分页:
+     default.Config.Count = 100
+     default.Config.Timeout = 100
+
+     SessionMessage {
+          gorm.Model // 包含Session ID, Create_At, Update_At, Delete_At等信息
+          SourceID
+          DestinationID
+          MessageBody []
+     }
+
+     1. if len(SessionMessage.MessageBody) > default.Config.Count => new SessionMessage
+     2. if time.Now().Sub(SessionMessage.Create_At) > Timeout => new SessionMessage
+
+     job: 每隔５分钟，进行数据清洗，清洗已经超过保存时间的message
+
+
+

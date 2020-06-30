@@ -27,14 +27,12 @@ func NewWebSocketManager() *WebsocketManager {
 }
 
 func (wm *WebsocketManager) Handler(ctx *gin.Context, userID string) {
-	ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
-	if err != nil {
-		fmt.Println("websocket creat failed", err)
-	}
-	if err != nil {
+	if ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
 		fmt.Println("websocket creat failed", err)
 	} else {
 		wm.Connects[userID] = ws
-		ws.WriteJSON("connect ws successd")
+		if err := ws.WriteJSON("connect ws successd"); err != nil {
+			fmt.Println("send Message errorr")
+		}
 	}
 }

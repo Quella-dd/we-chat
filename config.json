@@ -1,6 +1,6 @@
 {
     "username": "root",
-    "password": "rootroot",
+    "password": "123456",
     "dbname": "webchat",
-    "host": "127.0.0.1:3306"
+    "host": "127.0.0.1:6666"
 }

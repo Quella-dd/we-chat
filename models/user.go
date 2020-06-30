@@ -1,8 +1,11 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
 	"webchat/common"
 	"webchat/database"
 
@@ -17,9 +20,7 @@ type User struct {
 	Name     string `form:"name"`
 	PassWord string `form:"password"`
 	Email    string
-	Friends  []*User
-	Room     []*Room
-	Listener *Listener
+	// Listener *Listener
 }
 
 func (user *User) BeforeSave(scope *gorm.Scope) error {
@@ -28,6 +29,14 @@ func (user *User) BeforeSave(scope *gorm.Scope) error {
 	// scope.DB().Model(user).Update(user.ID, uuid.NewV4())
 	scope.SetColumn("email", "827301519@qq.com")
 	return nil
+}
+
+func (user User) MarshalBinary() ([]byte, error) {
+	return json.Marshal(user)
+}
+
+func (user *User) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, user)
 }
 
 func NewUserManager() *UserManager {
@@ -47,6 +56,11 @@ func (*UserManager) Login(ctx *gin.Context) {
 		common.Http404Response(ctx, user)
 	} else {
 		common.HttpSuccessResponse(ctx, user)
+	}
+
+	fmt.Printf("ready to set Redis: %d, %+v\n", user.ID, user)
+	if err := ManageEnv.DataCenterManager.Redis.Set(strconv.Itoa(int(user.ID)), user, time.Hour).Err(); err != nil {
+		fmt.Println(err)
 	}
 	return
 }

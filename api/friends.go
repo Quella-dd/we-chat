@@ -8,12 +8,12 @@ import (
 )
 
 func GetFriends(ctx *gin.Context) {
-	id := ctx.Param("id")
-	if id == "" {
+	userID := ctx.Request.Header.Get("userID")
+	if userID == "" {
 		common.HttpBadRequest(ctx)
 		return
 	}
-	models.ManageEnv.RelationShipManager.GetFriends(ctx, id)
+	models.ManageEnv.RelationShipManager.GetFriends(ctx, userID)
 }
 
 func AddFriend(ctx *gin.Context) {

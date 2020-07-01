@@ -74,7 +74,6 @@ func (*RoomManager) DeleteRoom(id string) error {
 	return nil
 }
 
-
 func (r *Room) filterChilds (id string) {
 	for i, user := range r.Childrens {
 		if strconv.Itoa(int(user.ID)) == id {

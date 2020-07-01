@@ -9,7 +9,9 @@ import (
 type SessionMessage struct {
 	gorm.Model
 
+	Type 		int
 	Count         int
+	RoomID 			int
 	SourceID      int
 	DestinationID int
 	MessageBody   MessagesBody ` sql:"TYPE:json"`

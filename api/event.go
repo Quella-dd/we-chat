@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"webchat/models"
 
 	"github.com/gin-gonic/gin"
@@ -9,7 +8,6 @@ import (
 
 func HandlerEvent(ctx *gin.Context) {
 	userID := ctx.Query("id")
-	fmt.Println("userID:", userID)
 	models.ManageEnv.WebsocketManager.Handler(ctx, userID)
 }
 

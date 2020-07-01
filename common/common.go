@@ -5,6 +5,12 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+const (
+	USERMESSAGE = iota
+	ROOMMESSAGE
+	BORDERCASTMESSAGE
+)
+
 func HttpBadRequest(ctx *gin.Context) {
 	ctx.JSON(400, "bad request")
 }

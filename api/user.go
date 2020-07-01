@@ -29,21 +29,21 @@ func GetUser(ctx *gin.Context) {
 	models.ManageEnv.UserManager.GetUser(ctx, id)
 }
 
-func JoinRoom(ctx *gin.Context) {
-	userID := ctx.Param("id")
-	roomID := ctx.Param("name")
-	if err := models.ManageEnv.UserManager.JoinRoom(userID, roomID); err != nil {
-		ctx.JSON(500, err)
-	}
-}
-
-func LeaveRoom(ctx *gin.Context) {
-	userID := ctx.Param("id")
-	roomID := ctx.Param("name")
-	if err := models.ManageEnv.UserManager.LeaveRoom(userID, roomID); err != nil {
-		ctx.JSON(500, err)
-	}
-}
+//func JoinRoom(ctx *gin.Context) {
+//	userID := ctx.Param("id")
+//	roomID := ctx.Param("name")
+//	if err := models.ManageEnv.UserManager.JoinRoom(userID, roomID); err != nil {
+//		ctx.JSON(500, err)
+//	}
+//}
+//
+//func LeaveRoom(ctx *gin.Context) {
+//	userID := ctx.Param("id")
+//	roomID := ctx.Param("name")
+//	if err := models.ManageEnv.UserManager.LeaveRoom(userID, roomID); err != nil {
+//		ctx.JSON(500, err)
+//	}
+//}
 
 func RemoveFromRoom(ctx *gin.Context) {
 	excuteUserID := ctx.GetHeader("userID")
@@ -66,11 +66,11 @@ func AddUserToRoom(ctx *gin.Context) {
 }
 
 func SearchUsers(ctx *gin.Context) {
-	name := ctx.Param("name")
-	if name == "" {
+	search := ctx.Param("search")
+	if search == "" {
 		common.HttpBadRequest(ctx)
 		return
 	}
-	obj := models.ManageEnv.UserManager.SearchUsers(ctx, name)
+	obj := models.ManageEnv.UserManager.SearchUsers(ctx, search)
 	ctx.JSON(200, obj)
 }

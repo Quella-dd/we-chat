@@ -93,49 +93,57 @@ func (userManager *UserManager) GetUser(ctx *gin.Context, userID string) {
 	common.HttpSuccessResponse(ctx, user)
 }
 
-func (userManager *UserManager) JoinRoom(userID, roomID string) error {
-	user, err := userManager.getUser(userID)
-	if err != nil {
-		return err
+func (UserManager *UserManager) listUsers() ([]User, error){
+	var users []User
+	if err := database.DB.Find(&users).Error;err!= nil {
+		return nil, err
 	}
-
-	room, err := ManageEnv.RoomManager.GetRoom(roomID)
-	if err != nil {
-		return err
-	}
-
-	if room.Childrens != nil {
-		room.Childrens = append(room.Childrens, *user)
-	} else {
-		room.Childrens = []User{*user}
-	}
-	if err := database.DB.Model(&room).Update("childrens", room.Childrens).Error; err != nil {
-		return err
-	}
-	return nil
+	return users, nil
 }
 
-func (userManager *UserManager) LeaveRoom(userID, roomID string) error {
-	_, err := userManager.getUser(userID)
-	if err != nil {
-		return err
-	}
-
-	room, err := ManageEnv.RoomManager.GetRoom(roomID)
-	if err != nil {
-		return err
-	}
-
-	if room.Childrens != nil {
-		room.filterChilds(userID)
-	} else {
-		return errors.New("this user is not in this room")
-	}
-	if err := database.DB.Model(&room).Update("childrens", room.Childrens).Error; err != nil {
-		return err
-	}
-	return nil
-}
+//func (userManager *UserManager) JoinRoom(userID, roomID string) error {
+//	user, err := userManager.getUser(userID)
+//	if err != nil {
+//		return err
+//	}
+//
+//	room, err := ManageEnv.RoomManager.GetRoom(roomID)
+//	if err != nil {
+//		return err
+//	}
+//
+//	if room.Childrens != nil {
+//		room.Childrens = append(room.Childrens, *user)
+//	} else {
+//		room.Childrens = []User{*user}
+//	}
+//	if err := database.DB.Model(&room).Update("childrens", room.Childrens).Error; err != nil {
+//		return err
+//	}
+//	return nil
+//}
+//
+//func (userManager *UserManager) LeaveRoom(userID, roomID string) error {
+//	_, err := userManager.getUser(userID)
+//	if err != nil {
+//		return err
+//	}
+//
+//	room, err := ManageEnv.RoomManager.GetRoom(roomID)
+//	if err != nil {
+//		return err
+//	}
+//
+//	if room.Childrens != nil {
+//		room.filterChilds(userID)
+//	} else {
+//		return errors.New("this user is not in this room")
+//	}
+//	if err := database.DB.Model(&room).Update("childrens", room.Childrens).Error; err != nil {
+//		return err
+//	}
+//	return nil
+//}
 
 func (userManager *UserManager) DeleteFromRoom(excuteUserID, roomID, userID string) error {
 	_, err := userManager.getUser(userID)
@@ -185,37 +193,18 @@ func (userManager *UserManager) AddUserToRoom(excuteUserID, roomID, userID strin
 	return nil
 }
 
-func (userManager *UserManager) SearchUsers(ctx *gin.Context, name string) interface{} {
-	var objects = struct {
-		Users []User
-		Rooms []Room
-	}{}
-
-	var (
-		users []User
-		rooms []Room
-	)
-
-	if err := database.DB.Where("id like?", "%"+name+"%").Or("name like ?", "%"+name+"%").Find(&users).Error; err != nil {
+func (userManager *UserManager) SearchUsers(ctx *gin.Context, search string) interface{} {
+	var users []User
+	if err := database.DB.Where("id like?", "%"+search+"%").Or("name like ?", "%"+search+"%").Find(&users).Error; err != nil {
 		fmt.Println("users sql not record")
 	}
-
-	if err := database.DB.Where("name like ?", "%"+name+"%").Find(&rooms).Error; err != nil {
-		fmt.Println("room sql not record")
-	}
-
-	objects.Users = users
-	objects.Rooms = rooms
-	return objects
+	return users
 }
 
 func (*UserManager) getUser(userID string) (*User, error) {
-	var users []*User
-	if err := database.DB.Where("id = ?", userID).Or("name = ?", userID).Find(&users).Error; err != nil {
+	var user User
+	if err := database.DB.Where("id = ?", userID).Or("name = ?", userID).First(&user).Error; err != nil {
 		return nil, err
 	}
-	if len(users) > 0 {
-		return users[0], nil
-	}
-	return nil, errors.New("record not found")
+	return &user, nil
 }

@@ -15,30 +15,40 @@ type router struct {
 var routers = []*router{
 	{method: http.MethodPost, path: "/login", handler: Login},
 	{method: http.MethodPost, path: "/registry", handler: CreateUser},
+
 	{method: http.MethodGet, path: "/users", handler: ListUsers},
 	{method: http.MethodGet, path: "/users/:id", handler: GetUser},
 
-	{method: http.MethodPost, path: "/user/:id/room/:name", handler: JoinRoom},
-	{method: http.MethodDelete, path: "/user/:id/room/:name", handler: LeaveRoom},
+	// 根据id/name 搜索 users， 是否需要模糊匹配还是准确检查
+	// 群聊是私有的，只有内部成员进行邀请，而不能通过群聊名称进行查询并加入
+	{method: http.MethodGet, path: "/search/users/:search", handler: SearchUsers},
 
-	{method: http.MethodPost, path: "/room/:id/addUser/:name", handler: AddUserToRoom},
-	{method: http.MethodPost, path: "/room/:id/deleteUser/:name", handler: RemoveFromRoom},
+	// 废弃
+	//{method: http.MethodPost, path: "/user/:id/room/:name", handler: JoinRoom},
+	//{method: http.MethodDelete, path: "/user/:id/room/:name", handler: LeaveRoom},
 
-	//{method: http.MethodPost, path: "/room", handler: CreateRoom},
-	//{method: http.MethodGet, path: "/rooms", handler: ListRooms},
-	//{method: http.MethodGet, path: "/room/:id", handler: GetRoom},
-	//{method: http.MethodPost, path: "/room/:name", handler: UpdateRoom},
-	//{method: http.MethodDelete, path: "/room/:name", handler: DeleteRoom},
+	{method: http.MethodPost, path: "/room", handler: CreateRoom},
+	{method: http.MethodGet, path: "/rooms", handler: ListRooms},
+	{method: http.MethodGet, path: "/room/:id", handler: GetRoom},
 
-	{method: http.MethodGet, path: "/search/users/:name", handler: SearchUsers},
+	// header: {'userID': 'xxx'}, 如果userID 不是room的管理员， 则没有权限更改room信息
+	{method: http.MethodPost, path: "/room/:id", handler: UpdateRoom},
+	{method: http.MethodDelete, path: "/room/:id", handler: DeleteRoom},
 
-	{method: http.MethodGet, path: "/friends/:id", handler: GetFriends},
+	// user visite other people to join this group
+	{method: http.MethodPost, path: "/addUser/:name/room/:id", handler: AddUserToRoom},
+	{method: http.MethodPost, path: "/deleteUser/:name/room/:id/", handler: RemoveFromRoom},
+
+	// header: {'userID': 'xxx'}
+	{method: http.MethodGet, path: "/friends", handler: GetFriends},
 	{method: http.MethodPost, path: "/friends/:id", handler: AddFriend},
 	{method: http.MethodDelete, path: "/friends/:id", handler: DeleteFriend},
 
-	{method: http.MethodPost, path: "/sendMessage", handler: HandlerMessage},
+	// websocket connect
 	{method: http.MethodGet, path: "/event", handler: HandlerEvent},
 
+	// dataCenterManger
+	{method: http.MethodPost, path: "/sendMessage", handler: HandlerMessage},
 	{method: http.MethodGet, path: "/messages/:id", handler: GetMessage},
 }
 
@@ -52,7 +62,3 @@ func InitRouter() {
 		panic(err)
 	}
 }
-
-/*
-	dataCenter-> (数据转发, 数据存储, 离线数据)
-*/

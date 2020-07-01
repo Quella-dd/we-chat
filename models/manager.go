@@ -47,27 +47,27 @@ func (dataCenter *DataCenterManager) HandlerMessage(ctx *gin.Context, userID str
 		fmt.Println("parse error", err)
 	}
 
-	dataCenter.Distribution(msg)
+	if err := dataCenter.Distribution(msg); err != nil {
+		return err
+	}
 	// dataCenter.Save(msg)
 	return nil
 }
 
 func (dataCenter *DataCenterManager) Distribution(msg SessionMessage) error {
-	identify := msg.getUserIdentify()
-
-	var user User
-	err := dataCenter.Redis.Get(identify).Scan(&user)
-
-	fmt.Printf("+++++++++identify: %+v\n, err: %+v, user: %+v\n", user, err)
-
-	ws, ok := ManageEnv.WebsocketManager.Connects[identify]
-
-	if err == nil && ok {
-		ws.WriteJSON(msg.MessageBody)
-	} else {
-		fmt.Println("not found ws")
+	var err error
+	switch msg.Type {
+	case common.USERMESSAGE:
+		err = ManageEnv.WebsocketManager.SendUserMessage(msg.getUserIdentify(), msg)
+		break
+	case common.ROOMMESSAGE:
+		err = ManageEnv.WebsocketManager.SendRoomMessage(msg)
+		break
+	case common.BORDERCASTMESSAGE:
+		err = ManageEnv.WebsocketManager.SendBordcastMessage(msg)
+		break
 	}
-	return nil
+	return err
 }
 
 func (dataCenter *DataCenterManager) Save(msg SessionMessage) error {

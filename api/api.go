@@ -23,10 +23,6 @@ var routers = []*router{
 	// 群聊是私有的，只有内部成员进行邀请，而不能通过群聊名称进行查询并加入
 	{method: http.MethodGet, path: "/search/users/:search", handler: SearchUsers},
 
-	// 废弃
-	//{method: http.MethodPost, path: "/user/:id/room/:name", handler: JoinRoom},
-	//{method: http.MethodDelete, path: "/user/:id/room/:name", handler: LeaveRoom},
-
 	{method: http.MethodPost, path: "/room", handler: CreateRoom},
 	{method: http.MethodGet, path: "/rooms", handler: ListRooms},
 	{method: http.MethodGet, path: "/room/:id", handler: GetRoom},
@@ -56,6 +52,7 @@ func InitRouter() {
 	engineer := gin.Default()
 	for _, router := range routers {
 		engineer.Handle(router.method, router.path, router.handler)
+
 	}
 	err := engineer.Run(":9999") // :8080
 	if err != nil {

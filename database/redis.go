@@ -1,4 +1,4 @@
-package models
+package database
 
 import "github.com/go-redis/redis"
 
@@ -10,6 +10,7 @@ var option = &redis.Options{
 
 func NewRedisClient() (*redis.Client, error) {
 	client := redis.NewClient(option)
+
 	if err := client.Ping().Err(); err != nil {
 		return nil, err
 	}

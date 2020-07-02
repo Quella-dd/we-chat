@@ -29,22 +29,7 @@ func GetUser(ctx *gin.Context) {
 	models.ManageEnv.UserManager.GetUser(ctx, id)
 }
 
-//func JoinRoom(ctx *gin.Context) {
-//	userID := ctx.Param("id")
-//	roomID := ctx.Param("name")
-//	if err := models.ManageEnv.UserManager.JoinRoom(userID, roomID); err != nil {
-//		ctx.JSON(500, err)
-//	}
-//}
-//
-//func LeaveRoom(ctx *gin.Context) {
-//	userID := ctx.Param("id")
-//	roomID := ctx.Param("name")
-//	if err := models.ManageEnv.UserManager.LeaveRoom(userID, roomID); err != nil {
-//		ctx.JSON(500, err)
-//	}
-//}
-
+// action in room
 func RemoveFromRoom(ctx *gin.Context) {
 	excuteUserID := ctx.GetHeader("userID")
 
@@ -65,6 +50,7 @@ func AddUserToRoom(ctx *gin.Context) {
 	}
 }
 
+// common func
 func SearchUsers(ctx *gin.Context) {
 	search := ctx.Param("search")
 	if search == "" {

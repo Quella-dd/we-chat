@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="94256053-ec0e-437b-b8fe-b7da48d0317f" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/READ.ME" beforeDir="false" afterPath="$PROJECT_DIR$/READ.ME" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/api.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/api.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/event.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/event.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/room.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/room.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/user.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/common.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/common.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/database.go" beforeDir="false" afterPath="$PROJECT_DIR$/database/database.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/datacenter.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/friends.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/friends.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/manager.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/manager.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/message.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/message.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/models.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/models.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/redis.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/user.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/websocket.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/websocket.go" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GOROOT" path="/usr/local/go" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GoLibraries">
+    <option name="indexEntireGoPath" value="false" />
+  </component>
+  <component name="ProjectId" id="1e7sBWf8m3GbFbUQpF6VVKERZ2D" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+    <option name="showMembers" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="go.sdk.automatically.set" value="true" />
+    <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
+    <property name="go.vendoring.notification.had.been.shown" value="true" />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="2" />
+  </component>
+  <component name="VgoProject">
+    <integration-enabled>true</integration-enabled>
+  </component>
+</project>

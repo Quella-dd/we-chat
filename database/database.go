@@ -5,26 +5,23 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-redis/redis"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 var (
-	configPath = "config.json"
-	DB         *gorm.DB
+	confPath = "config.json"
+	DB       *gorm.DB
+	Redis    *redis.Client
 )
 
-type Config struct {
-	Host     string `json:"host"`
-	UserName string `json:"username"`
-	PassWord string `json:"password"`
-	DataName string `json:"dbname"`
-}
+func parseConfig() *MysqlConfig {
+	var conf Conf
 
-func parseConfig() *Config {
-	var conf Config
-	fd, err := os.Open(configPath)
+	fd, err := os.Open(confPath)
 	defer fd.Close()
+
 	if err != nil {
 		panic("database config not found")
 	}
@@ -32,17 +29,23 @@ func parseConfig() *Config {
 	if err := json.NewDecoder(fd).Decode(&conf); err != nil {
 		panic(fmt.Sprintf("database config parse error: %+v\n", err))
 	}
-	return &conf
+	return &conf.Mysql
+}
+
+func getMysqlConnecURL(conf *MysqlConfig) string {
+	return fmt.Sprintf("%s:%s@(%s)/%s?charset=utf8&parseTime=True&loc=Local", conf.UserName, conf.PassWord, conf.Host, conf.DataName)
 }
 
 func InitDatabase() {
 	var err error
+
 	conf := parseConfig()
-	url := fmt.Sprintf("%s:%s@(%s)/%s?charset=utf8&parseTime=True&loc=Local", conf.UserName, conf.PassWord, conf.Host, conf.DataName)
 
-	DB, err = gorm.Open("mysql", url)
+	if DB, err = gorm.Open("mysql", getMysqlConnecURL(conf)); err != nil {
+		panic(err)
+	}
 
-	if err != nil {
+	if Redis, err = NewRedisClient(); err != nil {
 		panic(err)
 	}
 }

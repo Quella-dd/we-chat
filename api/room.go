@@ -8,7 +8,7 @@ import (
 )
 
 func CreateRoom(ctx *gin.Context) {
-	userID := ctx.GetHeader("userID")
+	userID := common.GetHeader(ctx)
 
 	var r models.Room
 	if err := ctx.ShouldBind(&r); err != nil {
@@ -23,7 +23,8 @@ func CreateRoom(ctx *gin.Context) {
 }
 
 func ListRooms(ctx *gin.Context) {
-	userID := ctx.GetHeader("userID")
+	userID := common.GetHeader(ctx)
+
 	if rooms, err := models.ManageEnv.RoomManager.ListRooms(userID); err != nil {
 		ctx.JSON(500, err)
 	} else {

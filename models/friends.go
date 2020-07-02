@@ -47,7 +47,7 @@ func (r *RelationShipManager) AddFriend(ctx *gin.Context, userID string, id stri
 		return
 	}
 
-	user, err := ManageEnv.UserManager.getUser(id)
+	user, err := ManageEnv.UserManager.getUserByID(id)
 	result, err := r.GetRelationByID(retID)
 
 	if err == nil {

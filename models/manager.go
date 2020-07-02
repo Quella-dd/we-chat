@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 	"webchat/common"
@@ -12,49 +13,82 @@ import (
 	"github.com/docker/docker/pkg/pubsub"
 )
 
+const (
+	UserActive = "user_active"
+)
+
 var (
-	buffer  = 1024
-	timeout = time.Second * 5
+	buffer      = 1024
+	timeout     = time.Second * 5
+	onlineCount = 100
 )
 
 type DataCenterManager struct {
-	Count     int
-	TimeOut   time.Duration
-	Redis     *redis.Client
-	Publisher *pubsub.Publisher
+	Count         int
+	TimeOut       time.Duration
+	Redis         *redis.Client
+	Publisher     *pubsub.Publisher
+	ActiveChannel []chan string
 }
 
 func NewDataCenterManager() *DataCenterManager {
 	database.DB.AutoMigrate(&SessionMessage{})
+	dataCenterManager := &DataCenterManager{
+		Count:     10,
+		TimeOut:   time.Hour,
+		Redis:     database.Redis,
+		Publisher: pubsub.NewPublisher(timeout, buffer),
+	}
+	go dataCenterManager.InitPubsub()
+	return dataCenterManager
+}
 
-	if redisClient, err := NewRedisClient(); err != nil {
-		panic(err)
-	} else {
-		return &DataCenterManager{
-			Count:     10,
-			TimeOut:   time.Hour,
-			Redis:     redisClient,
-			Publisher: pubsub.NewPublisher(timeout, buffer),
+func (dataCenter *DataCenterManager) InitPubsub() {
+	pubsub := dataCenter.Redis.Subscribe(UserActive)
+
+	for msg := range pubsub.Channel() {
+		fmt.Println("ready to send message of redis")
+		time.Sleep(time.Second)
+
+		var redisSendSuccess bool = true
+
+		for _, message := range dataCenter.Redis.LRange(msg.Payload, 0, -1).Val() {
+			var redisMessage RequestBody
+			if err := json.Unmarshal([]byte(message), &redisMessage); err != nil {
+				fmt.Println("read redis error", err)
+			} else {
+				fmt.Printf("parse success: %+v\n", redisMessage)
+				if err := ManageEnv.WebsocketManager.SendUserMessage(msg.Payload, redisMessage); err != nil {
+					redisSendSuccess = false
+				}
+			}
+		}
+
+		if redisSendSuccess {
+			dataCenter.Redis.Del(msg.Payload)
+			fmt.Println("redis message send to user success")
 		}
 	}
-	return nil
 }
 
 // msg SessionMessage
 func (dataCenter *DataCenterManager) HandlerMessage(ctx *gin.Context, userID string) error {
-	var msg SessionMessage
+	var msg RequestBody
 	if err := ctx.ShouldBind(&msg); err != nil {
 		fmt.Println("parse error", err)
 	}
 
+	msg.CreateAt = time.Now().Unix()
 	if err := dataCenter.Distribution(msg); err != nil {
 		return err
 	}
-	// dataCenter.Save(msg)
+	if err := dataCenter.Save(msg); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (dataCenter *DataCenterManager) Distribution(msg SessionMessage) error {
+func (dataCenter *DataCenterManager) Distribution(msg RequestBody) error {
 	var err error
 	switch msg.Type {
 	case common.USERMESSAGE:
@@ -70,28 +104,34 @@ func (dataCenter *DataCenterManager) Distribution(msg SessionMessage) error {
 	return err
 }
 
-func (dataCenter *DataCenterManager) Save(msg SessionMessage) error {
+func (dataCenter *DataCenterManager) Save(msg RequestBody) error {
 	var message SessionMessage
 
 	if err := database.DB.Where("source_id = ? and destination_id = ?", msg.SourceID, msg.DestinationID).Find(&message).Error; err != nil {
 		message.SourceID = msg.SourceID
 		message.DestinationID = msg.DestinationID
-		message.MessageBody = msg.MessageBody
+		message.Messages = append(message.Messages, MessagesBody{
+			Create_At: msg.CreateAt,
+			Content:   msg.Content,
+		})
 
 		if err := database.DB.Create(&message).Error; err != nil {
 			return err
 		}
 	}
 
-	message.MessageBody = append(message.MessageBody, msg.MessageBody...)
-	database.DB.Model(&message).Update("message_body", message.MessageBody)
+	message.Messages = append(message.Messages, MessagesBody{
+		Create_At: msg.CreateAt,
+		Content:   msg.Content,
+	})
+	database.DB.Model(&message).Update("messages", message.Messages)
 	return nil
 }
 
 func (*DataCenterManager) GetMessage(ctx *gin.Context, userID, destID string) error {
 	var messages []*SessionMessage
 
-	if err := database.DB.Where("source_id = ? and dest_id = ?", userID, destID).Find(&messages).Error; err != nil {
+	if err := database.DB.Where("source_id = ? and destination_id = ?", userID, destID).Find(&messages).Error; err != nil {
 		return err
 	}
 	common.HttpSuccessResponse(ctx, messages)

@@ -34,24 +34,35 @@ func (wm *WebsocketManager) Handler(ctx *gin.Context, userID string) {
 		fmt.Println("websocket creat failed", err)
 	} else {
 		wm.Connections.Store(userID, ws)
+
+		// publish event of userActive
+		if err := ManageEnv.DataCenterManager.Redis.Publish(UserActive, userID).Err(); err != nil {
+			fmt.Println("publish redis event error")
+		}
+
 		if err := ws.WriteJSON("connect ws successd"); err != nil {
 			fmt.Println("send Message errorr")
 		}
 	}
 }
 
-func (vm *WebsocketManager) SendUserMessage(identify string, msg SessionMessage) error {
+func (vm *WebsocketManager) SendUserMessage(identify string, msg RequestBody) error {
 	if ws, ok := vm.Connections.Load(identify); ok {
 		if conn, ok := ws.(*websocket.Conn); ok {
 			return conn.WriteJSON(msg)
 		}
 	}
 
-	// TOOD: 此时应该将message保存到离线数据库， 当用户上线时进行数据推送
+	fmt.Println("Destination user is offline")
+	// 如果用户离线，将message保存到离线数据库， redis列表的Key 为identify (list)
+	if err := ManageEnv.DataCenterManager.Redis.RPush(identify, msg).Err(); err != nil {
+		return err
+	}
+
 	return errors.New(fmt.Sprintf("websocket conn recode not fond: %+v\n", identify))
 }
 
-func (vm *WebsocketManager) SendRoomMessage(msg SessionMessage) error {
+func (vm *WebsocketManager) SendRoomMessage(msg RequestBody) error {
 	roomID := strconv.Itoa(msg.RoomID)
 	room, err := ManageEnv.RoomManager.GetRoom(roomID)
 	if err != nil {
@@ -63,7 +74,7 @@ func (vm *WebsocketManager) SendRoomMessage(msg SessionMessage) error {
 	return nil
 }
 
-func (vm *WebsocketManager) SendBordcastMessage(msg SessionMessage) error {
+func (vm *WebsocketManager) SendBordcastMessage(msg RequestBody) error {
 	users, err := ManageEnv.UserManager.listUsers()
 	if err != nil {
 		return err
@@ -73,4 +84,3 @@ func (vm *WebsocketManager) SendBordcastMessage(msg SessionMessage) error {
 	}
 	return nil
 }
-

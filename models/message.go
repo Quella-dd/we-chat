@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"strconv"
+	"time"
 
 	"github.com/jinzhu/gorm"
 )
@@ -35,6 +36,28 @@ type MessagesBody struct {
 	Create_At int64
 	Content   string
 }
+
+type MessageInfo struct {
+	RoomID        int `json: "RoomID"`
+	SourceID      int `json: "SourceID"`
+	DestinationID int `json: "DestinationID"`
+	Content       string
+	Create_At     time.Time
+}
+
+// func (sessionMessage *SessionMessage) transToMessageInfo() *[]MessageInfo {
+// 	var messageInfo MessageInfo
+
+// 	messageInfo.RoomID = sessionMessage.RoomID
+// 	messageInfo.SourceID = sessionMessage.SourceID
+// 	messageInfo.DestinationID = sessionMessage.DestinationID
+
+// 	for _, msg := range sessionMessage.Messages {
+// 		fmt.Println(msg)
+// 	}
+
+// 	return &messageInfo
+// }
 
 func (c SliceMessageBody) Value() (driver.Value, error) {
 	b, err := json.Marshal(c)

@@ -1,9 +1,9 @@
 {
     "mysql": {
         "username": "root",
-        "password": "123456",
+        "password": "rootroot",
         "dbname": "webchat",
-        "host": "127.0.0.1:6666"
+        "host": "127.0.0.1:3306"
     },
     "redis": {
         "address": "localhost:6379",

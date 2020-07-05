@@ -7,10 +7,9 @@ import (
 	"webchat/common"
 	"webchat/database"
 
+	"github.com/docker/docker/pkg/pubsub"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
-
-	"github.com/docker/docker/pkg/pubsub"
 )
 
 const (
@@ -129,11 +128,17 @@ func (dataCenter *DataCenterManager) Save(msg RequestBody) error {
 }
 
 func (*DataCenterManager) GetMessage(ctx *gin.Context, userID, destID string) error {
-	var messages []*SessionMessage
+	var resultMessages []SessionMessage
+	var message SessionMessage
 
-	if err := database.DB.Where("source_id = ? and destination_id = ?", userID, destID).Find(&messages).Error; err != nil {
-		return err
+	if err := database.DB.Where("source_id = ? and destination_id = ?", userID, destID).First(&message).Error; err == nil {
+		resultMessages = append(resultMessages, message)
 	}
-	common.HttpSuccessResponse(ctx, messages)
+
+	if err := database.DB.Where("source_id = ? and destination_id = ?", destID, userID).First(&message).Error; err == nil {
+		resultMessages = append(resultMessages, message)
+	}
+
+	common.HttpSuccessResponse(ctx, resultMessages)
 	return nil
 }

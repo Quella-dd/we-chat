@@ -3,8 +3,9 @@ package database
 import "github.com/go-redis/redis"
 
 var option = &redis.Options{
-	Addr: "localhost:6379",
-	DB:   0,
+	Addr:     "localhost:6379",
+	Password: "123456",
+	DB:       0,
 }
 
 func NewRedisClient() (*redis.Client, error) {

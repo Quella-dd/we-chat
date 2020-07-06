@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -59,7 +58,9 @@ func (vm *WebsocketManager) SendUserMessage(identify string, msg RequestBody) er
 		return err
 	}
 
-	return errors.New(fmt.Sprintf("websocket conn recode not fond: %+v\n", identify))
+	// value of return descide save the offline data in sql
+	return nil
+	// return errors.New(fmt.Sprintf("websocket conn recode not fond: %+v\n", identify))
 }
 
 func (vm *WebsocketManager) SendRoomMessage(msg RequestBody) error {

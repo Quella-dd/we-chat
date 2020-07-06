@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 	"webchat/common"
 	"webchat/database"
@@ -13,7 +14,8 @@ import (
 )
 
 const (
-	UserActive = "user_active"
+	UserActive      = "user_active"
+	GetMessageEvent = "get_message"
 )
 
 var (
@@ -128,17 +130,19 @@ func (dataCenter *DataCenterManager) Save(msg RequestBody) error {
 }
 
 func (*DataCenterManager) GetMessage(ctx *gin.Context, userID, destID string) error {
-	var resultMessages []SessionMessage
-	var message SessionMessage
+	var resultMessages MessageInfos
 
-	if err := database.DB.Where("source_id = ? and destination_id = ?", userID, destID).First(&message).Error; err == nil {
-		resultMessages = append(resultMessages, message)
+	var requestMessage, reponseMessage SessionMessage
+
+	if err := database.DB.Where("source_id = ? and destination_id = ?", userID, destID).First(&requestMessage).Error; err == nil {
+		resultMessages = append(resultMessages, *(requestMessage.GetMessageInfo())...)
 	}
 
-	if err := database.DB.Where("source_id = ? and destination_id = ?", destID, userID).First(&message).Error; err == nil {
-		resultMessages = append(resultMessages, message)
+	if err := database.DB.Where("source_id = ? and destination_id = ?", destID, userID).First(&reponseMessage).Error; err == nil {
+		resultMessages = append(resultMessages, *(reponseMessage.GetMessageInfo())...)
 	}
 
+	sort.Sort(resultMessages)
 	common.HttpSuccessResponse(ctx, resultMessages)
 	return nil
 }

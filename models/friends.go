@@ -27,7 +27,6 @@ func (r *RelationShipManager) GetFriends(ctx *gin.Context, id string) {
 	}
 
 	var result RelationShips
-	fmt.Println("+++++++++++++++++", userID)
 	if err := database.DB.Where("user_id = ?", userID).First(&result).Error; err != nil {
 		common.Http404Response(ctx, "404 not found")
 		return

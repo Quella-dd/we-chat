@@ -4,7 +4,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"strconv"
-	"time"
 
 	"github.com/jinzhu/gorm"
 )
@@ -42,22 +41,38 @@ type MessageInfo struct {
 	SourceID      int `json: "SourceID"`
 	DestinationID int `json: "DestinationID"`
 	Content       string
-	Create_At     time.Time
+	Create_At     int64
 }
 
-// func (sessionMessage *SessionMessage) transToMessageInfo() *[]MessageInfo {
-// 	var messageInfo MessageInfo
+type MessageInfos []MessageInfo
 
-// 	messageInfo.RoomID = sessionMessage.RoomID
-// 	messageInfo.SourceID = sessionMessage.SourceID
-// 	messageInfo.DestinationID = sessionMessage.DestinationID
+func (m MessageInfos) Len() int {
+	return len(m)
+}
 
-// 	for _, msg := range sessionMessage.Messages {
-// 		fmt.Println(msg)
-// 	}
+func (m MessageInfos) Less(i, j int) bool {
+	return m[i].Create_At < m[j].Create_At
+}
 
-// 	return &messageInfo
-// }
+func (m MessageInfos) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
+
+func (sessionMessage *SessionMessage) GetMessageInfo() *[]MessageInfo {
+	var messageInfos []MessageInfo
+
+	for _, msg := range sessionMessage.Messages {
+		var messageInfo MessageInfo
+		messageInfo.RoomID = sessionMessage.RoomID
+		messageInfo.SourceID = sessionMessage.SourceID
+		messageInfo.DestinationID = sessionMessage.DestinationID
+		messageInfo.Content = msg.Content
+		messageInfo.Create_At = msg.Create_At
+		messageInfos = append(messageInfos, messageInfo)
+	}
+
+	return &messageInfos
+}
 
 func (c SliceMessageBody) Value() (driver.Value, error) {
 	b, err := json.Marshal(c)

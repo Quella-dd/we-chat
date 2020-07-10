@@ -39,9 +39,15 @@ func (wm *WebsocketManager) Handler(ctx *gin.Context, userID string) {
 			fmt.Println("publish redis event error")
 		}
 
-		if err := ws.WriteJSON("connect ws successd"); err != nil {
+		if err := ws.WriteJSON(Event{
+			Action: Login_Event,
+		}); err != nil {
 			fmt.Println("send Message errorr")
 		}
+
+		//if err := ws.WriteJSON("connect ws successd"); err != nil {
+		//	fmt.Println("send Message errorr")
+		//}
 	}
 }
 

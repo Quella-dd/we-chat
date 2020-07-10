@@ -13,6 +13,6 @@ type MysqlConfig struct {
 }
 
 type ReidsConfig struct {
-	Address  string `json: "addredss"`
-	Password string `json: "password"`
+	Address  string `json:"addredss"`
+	Password string `json:"password"`
 }

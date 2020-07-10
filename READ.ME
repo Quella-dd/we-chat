@@ -29,5 +29,21 @@ TODO:
      单聊， 群聊， 系统通知
 
 
+ # 将ws的msg改造为Event
+ # Event 包含两种使用，一种是日志的记录，另外一种是后端将事件下发给前端使用
+
+ Action: ["Login", "Logout", "Send_Message", "Receive_Message"]
+
+ Event {
+    Action String
+    SourceID int
+    Destination int
+    DisplaySourceName string
+    DisplayDestinationName string
+    Content string
+ }
+
+
+
 
 

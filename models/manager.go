@@ -15,7 +15,6 @@ import (
 
 const (
 	UserActive      = "user_active"
-	GetMessageEvent = "get_message"
 )
 
 var (

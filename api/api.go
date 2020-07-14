@@ -39,6 +39,8 @@ var routers = []*router{
 	{method: http.MethodGet, path: "/friends", handler: GetFriends},
 	{method: http.MethodPost, path: "/friends/:id", handler: AddFriend},
 	{method: http.MethodDelete, path: "/friends/:id", handler: DeleteFriend},
+	{method: http.MethodGet, path: "/requests", handler: ListFriendRequests},
+	{method: http.MethodPost, path: "/requests/:id", handler: AckFriendRequest},
 
 	// websocket connect
 	{method: http.MethodGet, path: "/event", handler: HandlerEvent},

@@ -15,9 +15,10 @@ type UserManager struct{}
 
 type User struct {
 	gorm.Model
-	Name     string `form:"name"`
-	PassWord string `form:"password"`
-	Email    string
+	Name        string `form:"name"`
+	PassWord    string `form:"password"`
+	Email       string
+	NoValidator bool
 	// Listener *Listener
 }
 
@@ -25,6 +26,7 @@ func (user *User) BeforeSave(scope *gorm.Scope) error {
 	// scope.SetColumn("ID", uuid.NewV4())
 	// fmt.Println("scope beforeSave", uuid.NewV4())
 	// scope.DB().Model(user).Update(user.ID, uuid.NewV4())
+	scope.DB().Model(user).Update(user.NoValidator, true)
 	return nil
 }
 
@@ -160,7 +162,7 @@ func (*UserManager) getUserByName(name string) (*User, error) {
 	return &user, nil
 }
 
-func (*UserManager) getUserByID(userID string) (*User, error) {
+func (*UserManager) getUserByID(userID interface{}) (*User, error) {
 	var user User
 	if err := database.DB.Where("id = ?", userID).First(&user).Error; err != nil {
 		return nil, err

@@ -31,9 +31,7 @@ TODO:
 
  # 将ws的msg改造为Event
  # Event 包含两种使用，一种是日志的记录，另外一种是后端将事件下发给前端使用
-
  Action: ["Login", "Logout", "Send_Message", "Receive_Message"]
-
  Event {
     Action String
     SourceID int
@@ -42,6 +40,14 @@ TODO:
     DisplayDestinationName string
     Content string
  }
+
+// 已经实现
+    相互加好友要对方进行确认，如果对方拒绝则添加好友失败， 因此要将 好友添加请求的信息保存在数据库中
+    在用户设置页面可以设置当别人添加自己为好友时不进行验证
+
+如果使用webRTC在浏览器中，则需要用户先发起视频请求，如果说接收方同意该请求，则开启webRTC
+需要实现一个MessageEvent, 过期时间为30秒，如果接受方未接受并且超过过期时，则将该消息进行实例化到数据库中，如果用户进行接收，则在视频结束后进行消息的实例化
+首先将用户发起的视频请求保存在redis中，等待视频未接收或者接受视频并结束后，构建请求实例， 并将该实例写入数据库记录
 
 
 

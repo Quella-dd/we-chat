@@ -42,6 +42,10 @@ var routers = []*router{
 	{method: http.MethodGet, path: "/requests", handler: ListFriendRequests},
 	{method: http.MethodPost, path: "/requests/:id", handler: AckFriendRequest},
 
+	{method: http.MethodPost, path: "/RTCRequest", handler: sendRTCRequest},
+	{method: http.MethodPost, path: "/RTCRequest/:id/:status", handler: handlerRTCRequest},
+	{method: http.MethodPost, path: "/RTCRequest/:id/hangDown", handler: hangDownRTCRequest},
+
 	// websocket connect
 	{method: http.MethodGet, path: "/event", handler: HandlerEvent},
 

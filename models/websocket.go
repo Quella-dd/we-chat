@@ -42,7 +42,7 @@ func (wm *WebsocketManager) Handler(ctx *gin.Context, userID string) {
 		if err := ws.WriteJSON(Event{
 			Action: Login_Event,
 		}); err != nil {
-			fmt.Println("send Message errorr")
+			fmt.Println("send Message error")
 		}
 
 		//if err := ws.WriteJSON("connect ws successd"); err != nil {

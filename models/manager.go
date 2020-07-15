@@ -128,6 +128,8 @@ func (dataCenter *DataCenterManager) Save(msg RequestBody) error {
 	return nil
 }
 
+
+// +++++++++++++++++++++++++++++++++++++++++++++
 func (*DataCenterManager) GetMessage(ctx *gin.Context, userID, destID string) error {
 	var resultMessages MessageInfos
 

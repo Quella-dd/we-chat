@@ -8,6 +8,17 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+/*
+	dataCenter主要的作用是 [转发和实例化] message,但不限于message的格式和类型
+	type: 文字， 语音， 视频通话等
+	DumpMessage() 函数的作用是将不同类型的message实例化到session_messages的一条message
+*/
+
+type DumpMessager interface {
+	//DumpMessage() *MessageInfo
+	DumpMessage()
+}
+
 type CommonMessageBody struct {
 	Type          int `json: "Type"`
 	Count         int `json: "Count"`
@@ -40,8 +51,10 @@ type MessageInfo struct {
 	RoomID        int `json: "RoomID"`
 	SourceID      int `json: "SourceID"`
 	DestinationID int `json: "DestinationID"`
-	Content       string
 	Create_At     int64
+	Type 		  string
+	//Content       string
+	Value interface{}
 }
 
 type MessageInfos []MessageInfo

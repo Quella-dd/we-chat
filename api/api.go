@@ -42,23 +42,23 @@ var routers = []*router{
 	{method: http.MethodGet, path: "/requests", handler: ListFriendRequests},
 	{method: http.MethodPost, path: "/requests/:id", handler: AckFriendRequest},
 
-	{method: http.MethodPost, path: "/RTCRequest", handler: sendRTCRequest},
-	{method: http.MethodPost, path: "/RTCRequest/:id/:status", handler: handlerRTCRequest},
-	{method: http.MethodPost, path: "/RTCRequest/:id/hangDown", handler: hangDownRTCRequest},
-
-	// websocket connect
+	// create ws connection and receive message or event
 	{method: http.MethodGet, path: "/event", handler: HandlerEvent},
 
 	// dataCenterManger
 	{method: http.MethodPost, path: "/sendMessage", handler: HandlerMessage},
 	{method: http.MethodGet, path: "/messages/:id", handler: GetMessage},
+
+	// webcrt singnal server. SDP, ICE信息交换等
+	{method: http.MethodPost, path: "/RTCRequest", handler: sendRTCRequest},
+	{method: http.MethodPost, path: "/RTCRequest/:id/", handler: handlerRTCRequest},
+	{method: http.MethodPost, path: "/RTCRequest/:id/hangDown", handler: hangDownRTCRequest},
 }
 
 func InitRouter() {
 	engineer := gin.Default()
 	for _, router := range routers {
 		engineer.Handle(router.method, router.path, router.handler)
-
 	}
 	err := engineer.Run(":9999") // :8080
 	if err != nil {

@@ -3,10 +3,10 @@
         "username": "root",
         "password": "123456",
         "dbname": "webchat",
-        "host": "127.0.0.1:6666"
+        "host": "192.168.99.101:3306"
     },
     "redis": {
-        "address": "localhost:6379",
+        "address": "192.168.99.101:6379",
         "password": "123456"
     }
 }

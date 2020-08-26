@@ -4,32 +4,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
-	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"time"
+	"webchat/message"
+
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	uuid "github.com/satori/go.uuid"
 )
 
 var defaultExpiration = 10 * time.Second
 
-// 存储于redis中，并设置过期时间，若到了过期事件，则将该事件进行删除，并且向前端进行提示
-type RTCEvent struct {
-	ID string
-	gorm.Model
-
-	SourceID int `json: "sourceID"`
-	DestinationID int `json: "destinationID"`
-	Type string
-
-	StartTime time.Time
-	EndTime time.Time
-	Status string
-}
-
 func SendRTCRequest(c *gin.Context) error {
-	var event RTCEvent
+	var event message.RTCEvent
 	if err := c.ShouldBind(&event).Error(); err != "" {
 		return errors.New(fmt.Sprintf("bad request: %+v\n", http.StatusBadRequest))
 	}
@@ -80,28 +67,11 @@ func HangDownRTCRequest(c *gin.Context, eventID string) error {
 	return nil
 }
 
-func GetEventByID(eventID string) (*RTCEvent, error){
-	var event RTCEvent
+func GetEventByID(eventID string) (*message.RTCEvent, error) {
+	var event message.RTCEvent
 	result := ManageEnv.DataCenterManager.Redis.Get(eventID).Val()
 	if err := json.Unmarshal([]byte(result), &event); err != nil {
 		return nil, err
 	}
 	return &event, nil
-}
-
-func (e *RTCEvent) NewSessioMessage() *MessageInfo {
-	content, err := json.Marshal(struct{
-		Status string
-		SubTime time.Duration
-	}{e.Status, e.EndTime.Sub(e.StartTime)})
-
-	if err != nil {
-		return nil
-	}
-	return &MessageInfo{
-		SourceID: e.SourceID,
-		DestinationID: e.DestinationID,
-		Create_At: e.CreatedAt.Unix(),
-		Content: string(content),
-	}
 }

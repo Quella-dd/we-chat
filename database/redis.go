@@ -3,7 +3,7 @@ package database
 import "github.com/go-redis/redis"
 
 var option = &redis.Options{
-	Addr:     "localhost:6379",
+	Addr:     "192.168.99.101:6379",
 	Password: "123456",
 	DB:       0,
 }

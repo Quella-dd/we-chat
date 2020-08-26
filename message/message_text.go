@@ -1,11 +1,10 @@
-package types
+package message
 
 import (
 	"encoding/json"
 )
 
 type MessageText struct {
-
 }
 
 func (m *MessageText) DumpMessage() string {

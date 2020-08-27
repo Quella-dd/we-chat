@@ -1,7 +1,6 @@
 package api
 
 import (
-	"webchat/common"
 	"webchat/models"
 
 	"github.com/gin-gonic/gin"
@@ -13,12 +12,15 @@ func HandlerEvent(c *gin.Context) {
 }
 
 func HandlerMessage(c *gin.Context) {
-	userID := common.GetHeader(c)
+	userID := c.GetHeader(HeaderKey)
 	models.ManageEnv.DataCenterManager.HandlerMessage(c, userID)
 }
 
 func GetMessage(c *gin.Context) {
-	userID := common.GetHeader(c)
+	userID := c.GetHeader(HeaderKey)
 	destID := c.Param("id")
-	models.ManageEnv.DataCenterManager.GetMessage(c, userID, destID)
+
+	if err := models.ManageEnv.DataCenterManager.GetMessage(c, userID, destID); err != nil {
+		jsonResult(c.Writer, err)
+	}
 }

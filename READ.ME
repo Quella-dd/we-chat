@@ -53,6 +53,25 @@ TODO:
 当用户Ｂ同意用户Ａ的视频请求时，则开始进行peerConnection的建立，并将自己的mediaStream发送给对方
 当用户A、B挂断链接时，需通知对方
 
+/*
+	package Message 主要用来实现各种message的定义， 并且最终序列化到是数据库中，作为用户的一条message或者存储在redis缓存中
+
+	消息内容包含：
+		1、文本消息
+		2、图片消息
+		3、视频请求消息 (webRTC）
+		4、音频请求消息 (webRTC）
+		5、语音消息
+
+	MessageText
+	MessageImage
+
+	(在序列化为message时，需要延迟执行， 需要记录消息的状态，成功与否，如果成功则需记录消息的时长)
+	MessageVedioOnline
+	MessageAudioOnline
+	MessageAudioOffline
+*/
+
 
 
 

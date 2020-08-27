@@ -5,6 +5,7 @@ import (
 )
 
 type MessageText struct {
+	Content string
 }
 
 func (m *MessageText) DumpMessage() string {

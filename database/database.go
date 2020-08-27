@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	confPath = "config.json"
+	confPath = "/webchat/config.json"
 	DB       *gorm.DB
 	Redis    *redis.Client
 )
@@ -19,14 +19,13 @@ var (
 func parseConfig() *MysqlConfig {
 	var conf Conf
 
-	fd, err := os.Open(confPath)
-	defer fd.Close()
+	f, err := os.Open(confPath)
+	defer f.Close()
 
 	if err != nil {
 		panic("database config not found")
 	}
-
-	if err := json.NewDecoder(fd).Decode(&conf); err != nil {
+	if err := json.NewDecoder(f).Decode(&conf); err != nil {
 		panic(fmt.Sprintf("database config parse error: %+v\n", err))
 	}
 	return &conf.Mysql

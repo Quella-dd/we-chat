@@ -28,27 +28,25 @@ func NewWebSocketManager() *WebsocketManager {
 	}
 }
 
-func (wm *WebsocketManager) Handler(ctx *gin.Context, userID string) {
-	if ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
-		fmt.Println("websocket creat failed", err)
-	} else {
-		wm.Connections.Store(userID, ws)
-
-		// publish event of userActive
-		if err := ManageEnv.DataCenterManager.Redis.Publish(UserActive, userID).Err(); err != nil {
-			fmt.Println("publish redis event error")
-		}
-
-		if err := ws.WriteJSON(Event{
-			Action: Login_Event,
-		}); err != nil {
-			fmt.Println("send Message error")
-		}
-
-		//if err := ws.WriteJSON("connect ws successd"); err != nil {
-		//	fmt.Println("send Message errorr")
-		//}
+func (wm *WebsocketManager) Handler(ctx *gin.Context, id string) error {
+	ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+	if err != nil {
+		return err
 	}
+
+	wm.Connections.Store(id, ws)
+
+	// publish event of userActive
+	if err := ManageEnv.DataCenterManager.Redis.Publish(UserActive, id).Err(); err != nil {
+		return err
+	}
+
+	if err := ws.WriteJSON(Event{
+		Action: Login_Event,
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (vm *WebsocketManager) SendUserMessage(identify string, msg RequestBody) error {
@@ -82,7 +80,7 @@ func (vm *WebsocketManager) SendRoomMessage(msg RequestBody) error {
 }
 
 func (vm *WebsocketManager) SendBordcastMessage(msg RequestBody) error {
-	users, err := ManageEnv.UserManager.listUsers()
+	users, err := ManageEnv.UserManager.ListUsers()
 	if err != nil {
 		return err
 	}

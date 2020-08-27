@@ -1,62 +1,72 @@
 package api
 
 import (
-	"webchat/common"
+	"net/http"
 	"webchat/models"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Login(ctx *gin.Context) {
-	models.ManageEnv.UserManager.Login(ctx)
+	var user *models.User
+	if err := ctx.ShouldBind(user); err != nil {
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	err := models.ManageEnv.UserManager.Login(user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err)
+	}
 }
 
 func CreateUser(ctx *gin.Context) {
-	models.ManageEnv.UserManager.CreateUser(ctx)
+	var user *models.User
+	if err := ctx.ShouldBind(user); err != nil {
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	err := models.ManageEnv.UserManager.CreateUser(user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err)
+	}
+	ctx.JSON(http.StatusOK, user)
 }
 
 func ListUsers(ctx *gin.Context) {
-	models.ManageEnv.UserManager.ListUsers(ctx)
+	users, err := models.ManageEnv.UserManager.ListUsers()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, users)
 }
 
 func GetUser(ctx *gin.Context) {
 	id := ctx.Param("id")
-
 	if id == "" {
-		common.HttpBadRequest(ctx)
+		ctx.JSON(http.StatusBadRequest, "id shouldn't empty")
 		return
 	}
-	models.ManageEnv.UserManager.GetUser(ctx, id)
-}
-
-// action in room
-func RemoveFromRoom(ctx *gin.Context) {
-	excuteUserID := ctx.GetHeader("userID")
-
-	roomID := ctx.Param("id")
-	userID := ctx.Param("name")
-	if err := models.ManageEnv.UserManager.DeleteFromRoom(excuteUserID, roomID, userID); err != nil {
-		ctx.JSON(500, err)
+	user, err := models.ManageEnv.UserManager.GetUser(id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
 	}
+	ctx.JSON(http.StatusOK, user)
 }
 
-func AddUserToRoom(ctx *gin.Context) {
-	excuteUserID := ctx.GetHeader("userID")
-
-	roomID := ctx.Param("id")
-	userID := ctx.Param("name")
-	if err := models.ManageEnv.UserManager.AddUserToRoom(excuteUserID, roomID, userID); err != nil {
-		ctx.JSON(500, err)
-	}
-}
-
-// common func
 func SearchUsers(ctx *gin.Context) {
 	search := ctx.Param("search")
 	if search == "" {
-		common.HttpBadRequest(ctx)
+		ctx.JSON(http.StatusBadRequest, "search shouldn't empty")
 		return
 	}
-	obj := models.ManageEnv.UserManager.SearchUsers(ctx, search)
-	ctx.JSON(200, obj)
+	users, err := models.ManageEnv.UserManager.SearchUsers(search)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, users)
 }

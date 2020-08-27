@@ -1,32 +1,17 @@
-/*
-	package Message 主要用来实现各种message的定义， 并且最终序列化到是数据库中，作为用户的一条message或者存储在redis缓存中
-
-	消息内容包含：
-		1、文本消息
-		2、图片消息
-		3、视频请求消息 (webRTC）
-//
-		4、音频请求消息 (webRTC）
-		5、语音消息
-
-	MessageText
-	MessageImage
-
-	(在序列化为message时，需要延迟执行， 需要记录消息的状态，成功与否，如果成功则需记录消息的时长)
-	MessageVedioOnline
-	MessageAudioOnline
-
-	MessageAudioOffline
-
-	interface Marshal {
-		Marshal()
-	}
-*/
-
 package message
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"github.com/jinzhu/gorm"
+	"strconv"
+)
+
+const (
+	USERMESSAGE = iota 	// 私聊时的文本消息
+	RTCMESSAGE			// 私聊时的实时视频消息
+	ROOMMESSAGE			// 群聊时的文本消息
+	BORDERCASTMESSAGE	// 类似系统公告
 )
 
 const (
@@ -35,81 +20,119 @@ const (
 	MessageSignalPublic  = "public"
 )
 
-// 用户发起的message
-type RequestMessage struct {
-	Singal string `json: "Singal"`
-	Type   int    `json: "Type"`
+// 每种message 都有自己独特的序列化的方法，前端传递过来的结构中，将各自的字段转换为string类型的字符传递过来，
+type DumpRedisMessage interface {
+	DumpMessage() string
+}
 
-	RoomID        int    `json: "RoomID"`
-	SourceID      int    `json: "SourceID"`
-	DestinationID int    `json: "DestinationID"`
+type RequestMessage struct {
+	Scope
 	Body          string `json: "Body`
 }
 
-// 数据库中存的数据
 type SessionMessage struct {
 	gorm.Model
-	RoomID        int           `json: "RoomID"`
-	SourceID      int           `json: "SourceID"`
-	DestinationID int           `json: "DestinationID"`
-	Messages      []interface{} ` sql:"TYPE:json"`
+	Scope
+
+	Messages      []interface{} `sql:"TYPE:json"`
 }
 
-// type MessageInfo struct {
-// 	RoomID        int `json: "RoomID"`
-// 	SourceID      int `json: "SourceID"`
-// 	DestinationID int `json: "DestinationID"`
-// 	Create_At     int64
-// 	Type          string
-// 	//Content       string
-// 	Content interface{}
-// }
+type MessageInfo struct {
+	RoomID        int `json: "RoomID"`
+	SourceID      int `json: "SourceID"`
+	DestinationID int `json: "DestinationID"`
+	Create_At     int64
+	Type          string
+	//Content       string
+	Content interface{}
+}
 
-// // 主要是为了用来根据Create_at来进行排序
-// type MessageInfos []MessageInfo
+// 主要是为了用来根据Create_at来进行排序
+type MessageInfos []MessageInfo
 
-// func (m MessageInfos) Len() int {
-// 	return len(m)
-// }
+func (m MessageInfos) Len() int {
+	return len(m)
+}
 
-// func (m MessageInfos) Less(i, j int) bool {
-// 	return m[i].Create_At < m[j].Create_At
-// }
+func (m MessageInfos) Less(i, j int) bool {
+	return m[i].Create_At < m[j].Create_At
+}
 
-// func (m MessageInfos) Swap(i, j int) {
-// 	m[i], m[j] = m[j], m[i]
-// }
+func (m MessageInfos) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
 
-// // GetMessageInfo 将数据库查询的数据进行转化并且返回给前端进行使用
-// func (sessionMessage *SessionMessage) GetMessageInfo() *[]MessageInfo {
-// 	var messageInfos []MessageInfo
+type CommonMessageBody struct {
+	Type          int `json: "Type"`
+	Count         int `json: "Count"`
+	RoomID        int `json: "RoomID"`
+	SourceID      int `json: "SourceID"`
+	DestinationID int `json: "DestinationID"`
+}
 
-// 	for _, msg := range sessionMessage.Messages {
-// 		var messageInfo MessageInfo
-// 		messageInfo.RoomID = sessionMessage.RoomID
-// 		messageInfo.SourceID = sessionMessage.SourceID
-// 		messageInfo.DestinationID = sessionMessage.DestinationID
+type RequestBody struct {
+	CommonMessageBody
+	Content  string `json: "Content"`
+	CreateAt int64  `json: "CreateAt"`
+}
 
-// 		//messageInfo.Content = msg.Content
-// 		//messageInfo.Create_At = msg.Create_At
+type SessionMessage struct {
+	gorm.Model
 
-// 		messageInfo.Content = msg
-// 		messageInfos = append(messageInfos, messageInfo)
-// 	}
+	CommonMessageBody
+	Messages SliceMessageBody ` sql:"TYPE:json"`
+}
 
-// 	return &messageInfos
-// }
+type SliceMessageBody []MessagesBody
 
-// // NewMessage
-// func NewMessage() interface{} {
-// 	return nil
-// }
+type MessagesBody struct {
+	Create_At int64
+	Content   string
+}
 
-// /*
-// 	Signal string // 私聊，群聊，系统公告
-// 	Type string // 文字，视频，语音。。。
+type MessageInfo struct {
+	RoomID        int `json: "RoomID"`
+	SourceID      int `json: "SourceID"`
+	DestinationID int `json: "DestinationID"`
+	Create_At     int64
+	Type          string
+	Content       string
+	//Value interface{}
+}
 
-// 	SourceID string
-// 	DestinationID string
-// 	Content string
-// */
+type MessageInfos []MessageInfo
+
+func (m MessageInfos) Len() int {
+	return len(m)
+}
+
+func (m MessageInfos) Less(i, j int) bool {
+	return m[i].Create_At < m[j].Create_At
+}
+
+func (m MessageInfos) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
+
+
+func (c SliceMessageBody) Value() (driver.Value, error) {
+	b, err := json.Marshal(c)
+	return string(b), err
+}
+
+func (c *SliceMessageBody) Scan(input interface{}) error {
+	return json.Unmarshal(input.([]byte), c)
+}
+
+func (msg RequestBody) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(msg)
+}
+
+func (msg *RequestBody) UnmarshalBinary(data []byte) error {
+	var buf []byte
+	return json.Unmarshal(buf, &msg)
+}
+
+func (msg *RequestBody) getUserIdentify() string {
+	return strconv.Itoa(msg.DestinationID)
+}

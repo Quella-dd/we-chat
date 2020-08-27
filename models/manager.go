@@ -71,7 +71,6 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 	}
 }
 
-// msg SessionMessage
 func (dataCenter *DataCenterManager) HandlerMessage(ctx *gin.Context, userID string) error {
 	var msg RequestBody
 	if err := ctx.ShouldBind(&msg); err != nil {
@@ -128,8 +127,6 @@ func (dataCenter *DataCenterManager) Save(msg RequestBody) error {
 	return nil
 }
 
-
-// +++++++++++++++++++++++++++++++++++++++++++++
 func (*DataCenterManager) GetMessage(ctx *gin.Context, userID, destID string) error {
 	var resultMessages MessageInfos
 

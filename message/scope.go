@@ -5,13 +5,15 @@
 package message
 
 type Scope struct {
+	Type string
 	RoomID        int
 	SourceID      int
 	DestinationID int
 }
 
-func NewScope(RoomID, SourceID, DestinationID int) *Scope {
+func NewScope(scopeType string, RoomID, SourceID, DestinationID int) *Scope {
 	return &Scope{
+		Type: scopeType,
 		RoomID:        RoomID,
 		SourceID:      SourceID,
 		DestinationID: DestinationID,

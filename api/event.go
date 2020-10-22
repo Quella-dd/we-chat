@@ -1,7 +1,7 @@
 package api
 
 import (
-	"webchat/models"
+	"we-chat/models"
 
 	"github.com/gin-gonic/gin"
 )

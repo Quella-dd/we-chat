@@ -5,18 +5,18 @@ import (
 )
 
 const (
-	Login_Event = "Login"
-	Logout_Event = "Logout"
+	Login_Event   = "Login"
+	Logout_Event  = "Logout"
 	Message_Event = "Message"
 )
 
 type Event struct {
-	Action string
-	SourceID int
-	DestinationID int
-	DisplaySourceName string
+	Action                 string
+	SourceID               int
+	DestinationID          int
+	DisplaySourceName      string
 	DisplayDestinationName string
-	Content string
+	Content                string
 }
 
 func NewEvent() *Event {

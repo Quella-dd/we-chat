@@ -2,8 +2,8 @@ package models
 
 // ManageEnv...
 var ManageEnv = struct {
-	UserManager *UserManager
-	GroupManager *GroupManager
+	UserManager         *UserManager
+	GroupManager        *GroupManager
 	RelationShipManager *RelationShipManager
 	WebsocketManager    *WebsocketManager
 	DataCenterManager   *DataCenterManager

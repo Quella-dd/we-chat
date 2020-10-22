@@ -3,7 +3,7 @@ package models
 import (
 	"encoding/json"
 	"errors"
-	"webchat/database"
+	"we-chat/database"
 
 	"github.com/jinzhu/gorm"
 )

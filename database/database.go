@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	confPath = "/webchat/config.json"
+	confPath = "database/config.json"
 	DB       *gorm.DB
 	Redis    *redis.Client
 )

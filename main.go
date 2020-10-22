@@ -1,9 +1,9 @@
 package main
 
 import (
-	"webchat/api"
-	"webchat/database"
-	"webchat/models"
+	"we-chat/api"
+	"we-chat/database"
+	"we-chat/models"
 )
 
 func main() {

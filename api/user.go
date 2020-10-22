@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
-	"webchat/models"
+	"we-chat/models"
 
 	"github.com/gin-gonic/gin"
 )

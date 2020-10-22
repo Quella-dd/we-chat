@@ -2,11 +2,11 @@
     "mysql": {
         "username": "root",
         "password": "123456",
-        "dbname": "webchat",
-        "host": "192.168.99.101:3306"
+        "dbname": "wechat",
+        "host": "127.0.0.1:6666"
     },
     "redis": {
-        "address": "192.168.99.101:6379",
+        "address": "127.0.0.1:6379",
         "password": "123456"
     }
 }

@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
-	"webchat/models"
+	"we-chat/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -53,7 +53,7 @@ func DeleteFriend(ctx *gin.Context) {
 
 func ListFriendRequests(ctx *gin.Context) {
 	id := ctx.GetHeader(HeaderKey)
-	if id == ""  {
+	if id == "" {
 		ctx.JSON(http.StatusBadRequest, nil)
 		return
 	}

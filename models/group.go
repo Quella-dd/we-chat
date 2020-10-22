@@ -3,7 +3,7 @@ package models
 import (
 	"errors"
 	"strconv"
-	"webchat/database"
+	"we-chat/database"
 
 	"github.com/jinzhu/gorm"
 )
@@ -81,7 +81,7 @@ func (userManager *UserManager) DeleteFromGroup(id, groupID, userID string) erro
 	if group.ManagerID == id {
 		for i, user := range group.Childes {
 			if strconv.Itoa(int(user.ID)) == id {
-				group.Childes =  append(group.Childes[:i], group.Childes[i+1:]...)
+				group.Childes = append(group.Childes[:i], group.Childes[i+1:]...)
 			}
 		}
 		err := database.DB.Model(group).Update("childrens", group.Childes).Error

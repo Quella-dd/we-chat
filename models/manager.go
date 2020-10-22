@@ -3,10 +3,10 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 	"time"
-	"webchat/common"
-	"webchat/database"
+	"we-chat/database"
+	"we-chat/message"
+	Message "we-chat/message"
 
 	"github.com/docker/docker/pkg/pubsub"
 	"github.com/gin-gonic/gin"
@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	UserActive      = "user_active"
+	UserActive = "user_active"
 )
 
 var (
@@ -32,7 +32,8 @@ type DataCenterManager struct {
 }
 
 func NewDataCenterManager() *DataCenterManager {
-	database.DB.AutoMigrate(&SessionMessage{})
+	database.DB.AutoMigrate(&Message.SessionMessage{})
+
 	dataCenterManager := &DataCenterManager{
 		Count:     10,
 		TimeOut:   time.Hour,
@@ -52,13 +53,13 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 
 		var redisSendSuccess bool = true
 
-		for _, message := range dataCenter.Redis.LRange(msg.Payload, 0, -1).Val() {
-			var redisMessage RequestBody
-			if err := json.Unmarshal([]byte(message), &redisMessage); err != nil {
+		for _, msg := range dataCenter.Redis.LRange(msg.Payload, 0, -1).Val() {
+			var redisMessage Message.RequestMessage
+			if err := json.Unmarshal([]byte(msg), &redisMessage); err != nil {
 				fmt.Println("read redis error", err)
 			} else {
 				fmt.Printf("parse success: %+v\n", redisMessage)
-				if err := ManageEnv.WebsocketManager.SendUserMessage(msg.Payload, redisMessage); err != nil {
+				if err := ManageEnv.WebsocketManager.SendUserMessage(redisMessage.GetUserIdentify(), redisMessage); err != nil {
 					redisSendSuccess = false
 				}
 			}
@@ -72,12 +73,12 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 }
 
 func (dataCenter *DataCenterManager) HandlerMessage(ctx *gin.Context, userID string) error {
-	var msg RequestBody
+	var msg Message.RequestMessage
 	if err := ctx.ShouldBind(&msg); err != nil {
 		fmt.Println("parse error", err)
 	}
 
-	msg.CreateAt = time.Now().Unix()
+	msg.Create_At = time.Now()
 	if err := dataCenter.Distribution(msg); err != nil {
 		return err
 	}
@@ -87,60 +88,63 @@ func (dataCenter *DataCenterManager) HandlerMessage(ctx *gin.Context, userID str
 	return nil
 }
 
-func (dataCenter *DataCenterManager) Distribution(msg RequestBody) error {
+func (dataCenter *DataCenterManager) Distribution(msg Message.RequestMessage) error {
 	var err error
-	switch msg.Type {
-	case common.USERMESSAGE:
-		err = ManageEnv.WebsocketManager.SendUserMessage(msg.getUserIdentify(), msg)
+	switch msg.Scope.Stype {
+	case message.USERMESSAGE:
+		err = ManageEnv.WebsocketManager.SendUserMessage(msg.GetUserIdentify(), msg)
 		break
-	case common.ROOMMESSAGE:
+	case message.ROOMMESSAGE:
 		err = ManageEnv.WebsocketManager.SendRoomMessage(msg)
 		break
-	case common.BORDERCASTMESSAGE:
+	case message.BORDERCASTMESSAGE:
 		err = ManageEnv.WebsocketManager.SendBordcastMessage(msg)
 		break
 	}
 	return err
 }
 
-func (dataCenter *DataCenterManager) Save(msg RequestBody) error {
-	var message SessionMessage
+func (dataCenter *DataCenterManager) Save(msg Message.RequestMessage) error {
+	m := Message.NewMessage(msg.Scope.Ctype, msg.Content)
+
+	var message Message.SessionMessage
 
 	if err := database.DB.Where("source_id = ? and destination_id = ?", msg.SourceID, msg.DestinationID).Find(&message).Error; err != nil {
 		message.SourceID = msg.SourceID
 		message.DestinationID = msg.DestinationID
-		message.Messages = append(message.Messages, MessagesBody{
-			Create_At: msg.CreateAt,
-			Content:   msg.Content,
-		})
-
+		message.Messages = append(message.Messages, m)
+		// message.Messages = append(message.Messages, MessagesBody{
+		// 	Create_At: msg.CreateAt,
+		// 	Content:   msg.Content,
+		// })
 		if err := database.DB.Create(&message).Error; err != nil {
 			return err
 		}
 	}
 
-	message.Messages = append(message.Messages, MessagesBody{
-		Create_At: msg.CreateAt,
-		Content:   msg.Content,
-	})
+	message.Messages = append(message.Messages, m)
+	// message.Messages = append(message.Messages, MessagesBody{
+	// 	Create_At: msg.CreateAt,
+	// 	Content:   msg.Content,
+	// })
 	database.DB.Model(&message).Update("messages", message.Messages)
 	return nil
 }
 
 func (*DataCenterManager) GetMessage(ctx *gin.Context, userID, destID string) error {
-	var resultMessages MessageInfos
+	// var resultMessages message.MessageInfos
 
-	var requestMessage, reponseMessage SessionMessage
+	// var requestMessage, reponseMessage Message.SessionMessage
 
-	if err := database.DB.Where("source_id = ? and destination_id = ?", userID, destID).First(&requestMessage).Error; err == nil {
-		resultMessages = append(resultMessages, *(requestMessage.GetMessageInfo())...)
-	}
+	// if err := database.DB.Where("source_id = ? and destination_id = ?", userID, destID).First(&requestMessage).Error; err == nil {
+	// 	resultMessages = append(resultMessages, *(requestMessage.GetMessageInfo())...)
+	// }
 
-	if err := database.DB.Where("source_id = ? and destination_id = ?", destID, userID).First(&reponseMessage).Error; err == nil {
-		resultMessages = append(resultMessages, *(reponseMessage.GetMessageInfo())...)
-	}
+	// if err := database.DB.Where("source_id = ? and destination_id = ?", destID, userID).First(&reponseMessage).Error; err == nil {
+	// 	resultMessages = append(resultMessages, *(reponseMessage.GetMessageInfo())...)
+	// }
 
-	sort.Sort(resultMessages)
-	common.HttpSuccessResponse(ctx, resultMessages)
+	// sort.Sort(resultMessages)
+	// common.HttpSuccessResponse(ctx, resultMessages)
 	return nil
 }

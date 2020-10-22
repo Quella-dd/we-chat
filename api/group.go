@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
-	"webchat/models"
+	"we-chat/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,7 +40,7 @@ func CreateGroup(ctx *gin.Context) {
 func UpdateGroup(ctx *gin.Context) {
 	var group *models.Group
 	if err := ctx.ShouldBind(group); err != nil {
-		ctx.JSON(http.StatusBadRequest,nil)
+		ctx.JSON(http.StatusBadRequest, nil)
 	}
 	err := models.ManageEnv.GroupManager.UpdateGroup(group)
 	if err != nil {

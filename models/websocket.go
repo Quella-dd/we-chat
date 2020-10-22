@@ -1,10 +1,10 @@
 package models
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
+	"we-chat/message"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -49,14 +49,16 @@ func (wm *WebsocketManager) Handler(ctx *gin.Context, id string) error {
 	return nil
 }
 
-func (vm *WebsocketManager) SendUserMessage(identify string, msg RequestBody) error {
+func (vm *WebsocketManager) SendUserMessage(identify string, msg message.RequestMessage) error {
 	if ws, ok := vm.Connections.Load(identify); ok {
 		if conn, ok := ws.(*websocket.Conn); ok {
 			return conn.WriteJSON(msg)
 		}
 	}
 
-	fmt.Println("Destination user is offline")
+	// fmt.Println("Destination user is offline")
+	// logrus.Info("Destination user is offline")
+
 	// 如果用户离线，将message保存到离线数据库， redis列表的Key 为identify (list)
 	if err := ManageEnv.DataCenterManager.Redis.RPush(identify, msg).Err(); err != nil {
 		return err
@@ -67,19 +69,19 @@ func (vm *WebsocketManager) SendUserMessage(identify string, msg RequestBody) er
 	// return errors.New(fmt.Sprintf("websocket conn recode not fond: %+v\n", identify))
 }
 
-func (vm *WebsocketManager) SendRoomMessage(msg RequestBody) error {
+func (vm *WebsocketManager) SendRoomMessage(msg message.RequestMessage) error {
 	roomID := strconv.Itoa(msg.RoomID)
-	room, err := ManageEnv.RoomManager.GetRoom(roomID)
+	room, err := ManageEnv.GroupManager.GetGroup(roomID)
 	if err != nil {
 		return err
 	}
-	for _, v := range room.Childrens {
+	for _, v := range room.Childes {
 		vm.SendUserMessage(strconv.Itoa(int(v.ID)), msg)
 	}
 	return nil
 }
 
-func (vm *WebsocketManager) SendBordcastMessage(msg RequestBody) error {
+func (vm *WebsocketManager) SendBordcastMessage(msg message.RequestMessage) error {
 	users, err := ManageEnv.UserManager.ListUsers()
 	if err != nil {
 		return err

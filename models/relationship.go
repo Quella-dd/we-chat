@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"webchat/database"
-	"webchat/message"
+	"we-chat/database"
+	"we-chat/message"
 
 	"github.com/jinzhu/gorm"
 )
@@ -49,7 +49,7 @@ func (c *RelationUsers) Scan(input interface{}) error {
 
 func (r *RelationShipManager) GetFriends(id string) ([]User, error) {
 	result, err := r.GetRelation(id)
-	if  err != nil {
+	if err != nil {
 		return nil, err
 	}
 	return result.RelationShip, nil
@@ -75,7 +75,7 @@ func (r *RelationShipManager) AddFriend(requestID, destinationID string) error {
 			Type:          message.USERMESSAGE,
 			SourceID:      requestID,
 			DestinationID: destinationID,
-			Status: false,
+			Status:        false,
 		}
 		if err := database.DB.Save(request).Error; err != nil {
 			return err
@@ -161,7 +161,7 @@ func (r *RelationShipManager) AckRequest(requestID, destinationID string) error 
 	if err := r.UpdateRelationShip(requestID, destinationID); err != nil {
 		return err
 	}
-	if err :=  r.UpdateRelationShip(destinationID, requestID); err != nil {
+	if err := r.UpdateRelationShip(destinationID, requestID); err != nil {
 		return err
 	}
 	return nil

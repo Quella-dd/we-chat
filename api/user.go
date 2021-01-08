@@ -7,66 +7,109 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Login(ctx *gin.Context) {
-	var user *models.User
-	if err := ctx.ShouldBind(user); err != nil {
-		ctx.JSON(http.StatusBadRequest, err)
+func Login(c *gin.Context) {
+	var user models.User
+	if err := c.ShouldBind(&user); err != nil {
+		c.JSON(http.StatusBadRequest, err)
 		return
 	}
 
-	err := models.ManageEnv.UserManager.Login(user)
+	token, err := models.ManageEnv.UserManager.Login(&user)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
-	}
-}
-
-func CreateUser(ctx *gin.Context) {
-	var user *models.User
-	if err := ctx.ShouldBind(user); err != nil {
-		ctx.JSON(http.StatusBadRequest, err)
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
-	err := models.ManageEnv.UserManager.CreateUser(user)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
-	}
-	ctx.JSON(http.StatusOK, user)
+	c.Writer.Header().Set("token", token)
+	c.JSON(http.StatusOK, nil)
 }
 
-func ListUsers(ctx *gin.Context) {
-	users, err := models.ManageEnv.UserManager.ListUsers()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+func Register(c *gin.Context) {
+	var user models.User
+	if err := c.ShouldBind(&user); err != nil {
+		c.JSON(http.StatusBadRequest, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, users)
+
+	err := models.ManageEnv.UserManager.Register(&user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+	}
+	c.JSON(http.StatusOK, user)
 }
 
-func GetUser(ctx *gin.Context) {
-	id := ctx.Param("id")
+func GetUser(c *gin.Context) {
+	id := c.Param("id")
 	if id == "" {
-		ctx.JSON(http.StatusBadRequest, "id shouldn't empty")
+		c.JSON(http.StatusBadRequest, "id must not be empty")
 		return
 	}
-	user, err := models.ManageEnv.UserManager.GetUser(id)
+	user, err := models.ManageEnv.UserManager.GetUser(id, "id")
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, user)
 }
 
-func SearchUsers(ctx *gin.Context) {
-	search := ctx.Param("search")
-	if search == "" {
-		ctx.JSON(http.StatusBadRequest, "search shouldn't empty")
+func SearchUsers(c *gin.Context) {
+	name := c.Param("name")
+	if name == "" {
+		c.JSON(http.StatusBadRequest, "name must not be empty")
 		return
 	}
-	users, err := models.ManageEnv.UserManager.SearchUsers(search)
+	users, err := models.ManageEnv.UserManager.SearchUsers(name)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, users)
+	c.JSON(http.StatusOK, users)
 }
+
+// API Friends
+func GetFriends(c *gin.Context) {
+	id := c.GetString("userID")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, nil)
+		return
+	}
+	users, err := models.ManageEnv.UserManager.ListFriends(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, users)
+}
+
+func AddFriend(c *gin.Context) {
+	id := c.GetString("userID")
+	addID := c.Param("id")
+
+	var option models.AddUserOptions
+	_ = c.ShouldBind(&option)
+
+	if err := models.ManageEnv.UserManager.AddFriend(id, addID, option.Content); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+	}  else {
+		c.JSON(http.StatusOK, nil)
+	}
+}
+
+func DeleteFriend(c *gin.Context) {
+	requestID := c.GetString("userID")
+	destinationID := c.Param("id")
+
+	if requestID == "" || destinationID == "" {
+		c.JSON(http.StatusBadRequest, nil)
+		return
+	}
+	err := models.ManageEnv.UserManager.DeleteFriend(requestID, destinationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, nil)
+}
+

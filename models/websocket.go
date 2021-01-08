@@ -28,25 +28,22 @@ func NewWebSocketManager() *WebsocketManager {
 	}
 }
 
-func (wm *WebsocketManager) Handler(ctx *gin.Context, id string) error {
+func (m *WebsocketManager) Handler(ctx *gin.Context, id string) error {
 	ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		return err
 	}
 
-	wm.Connections.Store(id, ws)
+	m.Connections.Store(id, ws)
 
 	// publish event of userActive
 	if err := ManageEnv.DataCenterManager.Redis.Publish(UserActive, id).Err(); err != nil {
 		return err
 	}
 
-	if err := ws.WriteJSON(Event{
+	return ws.WriteJSON(Event{
 		Action: Login_Event,
-	}); err != nil {
-		return err
-	}
-	return nil
+	});
 }
 
 func (vm *WebsocketManager) SendUserMessage(identify string, msg message.RequestMessage) error {

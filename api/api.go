@@ -1,9 +1,11 @@
 package api
 
 import (
-	"encoding/json"
-	"io"
+	"errors"
+	"github.com/dgrijalva/jwt-go"
 	"net/http"
+	"strings"
+	"we-chat/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,42 +18,40 @@ type router struct {
 
 var routers = []*router{
 	{method: http.MethodPost, path: "/login", handler: Login},
-	{method: http.MethodPost, path: "/registry", handler: CreateUser},
+	{method: http.MethodPost, path: "/register", handler: Register},
 
-	{method: http.MethodGet, path: "/users", handler: ListUsers},
-	{method: http.MethodGet, path: "/users/:id", handler: GetUser},
+	{method: http.MethodGet, path: "/sessions", handler: ListSessions},
+	{method: http.MethodDelete, path: "/session/:id", handler: DeleteSession},
 
-	// 根据id/name 搜索 users， 是否需要模糊匹配还是准确检查
-	{method: http.MethodGet, path: "/search/users/:search", handler: SearchUsers},
+	{method: http.MethodGet, path: "/user/:id", handler: GetUser},
+	{method: http.MethodGet, path: "/user/:name", handler: SearchUsers},
 
-	// 群聊是私有的，只有内部成员进行邀请，而不能通过群聊名称进行查询并加入
-	{method: http.MethodPost, path: "/room", handler: CreateGroup},
-	{method: http.MethodGet, path: "/rooms", handler: ListGroup},
-	{method: http.MethodGet, path: "/room/:id", handler: GetGroup},
-
-	// header: {'userID': 'xxx'}, 如果userID 不是room的管理员， 则没有权限更改room信息
-	{method: http.MethodPost, path: "/room/:id", handler: UpdateGroup},
-	{method: http.MethodDelete, path: "/room/:id", handler: DeleteGroup},
-
-	// user visit other people join in this group
-	{method: http.MethodPost, path: "/addUser/:name/room/:id", handler: AddUserToRoom},
-	{method: http.MethodPost, path: "/deleteUser/:name/room/:id/", handler: RemoveFromRoom},
-
-	// header: {'userID': 'xxx'}
 	{method: http.MethodGet, path: "/friends", handler: GetFriends},
-	{method: http.MethodPost, path: "/friends/:id", handler: AddFriend},
-	{method: http.MethodDelete, path: "/friends/:id", handler: DeleteFriend},
-	{method: http.MethodGet, path: "/requests", handler: ListFriendRequests},
-	{method: http.MethodPost, path: "/requests/:id", handler: AckFriendRequest},
+	{method: http.MethodPost, path: "/friend/:id", handler: AddFriend},
+	{method: http.MethodDelete, path: "/friend/:id", handler: DeleteFriend},
 
+	{method: http.MethodGet, path: "/requests", handler: ListRequests},
+	{method: http.MethodPost, path: "/request/:id", handler: AckRequest},
+	{method: http.MethodDelete, path: "/request/:id", handler: DeleteRequest},
+
+	{method: http.MethodGet, path: "/groups", handler: ListGroups},
+	{method: http.MethodPost, path: "/group", handler: CreateGroup},
+	{method: http.MethodPost, path: "/group/:id", handler: UpdateGroup},
+	{method: http.MethodGet, path: "/group/:id", handler: GetGroup},
+	{method: http.MethodDelete, path: "/group/:id", handler: DeleteGroup},
+
+	{method: http.MethodPost, path: "/join/:name/group/:id", handler: JoinGroup},
+	{method: http.MethodPost, path: "/leave/:name/group/:id/", handler: LeaveGroup},
+
+
+	// TODO: Refactor
 	// create ws connection and receive message or event
 	{method: http.MethodGet, path: "/event", handler: HandlerEvent},
-
-	// dataCenterManger
+	// dataCenterManger, 当用户A发送消息用户B, 则分别对用户A和用户B创建Session, 如果session存在，则更新session
 	{method: http.MethodPost, path: "/sendMessage", handler: HandlerMessage},
 	{method: http.MethodGet, path: "/messages/:id", handler: GetMessage},
 
-	// webcrt singnal server. SDP, ICE信息交换等
+	// TODO:
 	{method: http.MethodPost, path: "/RTCRequest", handler: sendRTCRequest},
 	{method: http.MethodPost, path: "/RTCRequest/:id/", handler: handlerRTCRequest},
 	{method: http.MethodPost, path: "/RTCRequest/:id/hangDown", handler: hangDownRTCRequest},
@@ -59,8 +59,9 @@ var routers = []*router{
 
 func InitRouter() {
 	engineer := gin.Default()
+	engineer.Use()
 	for _, router := range routers {
-		engineer.Handle(router.method, router.path, router.handler)
+		engineer.Handle(router.method, router.path, validateHandler(router.handler))
 	}
 	err := engineer.Run(":9999") // :8080
 	if err != nil {
@@ -68,10 +69,34 @@ func InitRouter() {
 	}
 }
 
-func jsonResult(w io.Writer, v interface{}) {
-	buf, err := json.Marshal(v)
-	if err != nil {
-		panic(err)
+func validateHandler(f gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !strings.Contains(c.Request.URL.Path, "/login") && !strings.Contains(c.Request.URL.Path, "/register") {
+			tokenAuth := c.GetHeader("token")
+			if tokenAuth == "" {
+				c.JSON(http.StatusUnauthorized, gin.H {
+					"error": errors.New("http.StatusUnauthorized"),
+				})
+				return
+			} else {
+				t, err := jwt.ParseWithClaims(tokenAuth, &models.LoginClaims{}, func(token *jwt.Token) (interface{}, error) {
+					return []byte(models.SecretKey), nil
+				})
+
+				if err != nil {
+					c.JSON(http.StatusUnauthorized, gin.H {
+						"error": errors.New("http.StatusUnauthorized"),
+					})
+					return
+				}
+				if claims, ok := t.Claims.(*models.LoginClaims); ok && t.Valid {
+					c.Set("userName", claims.UserName)
+					c.Set("userID", claims.UserID)
+				}
+			}
+		}
+		f(c)
 	}
-	w.Write(buf)
 }
+
+// TODO: 封装error包, 用来wrap error

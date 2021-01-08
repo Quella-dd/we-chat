@@ -5,6 +5,7 @@ import (
 )
 
 type MessageText struct {
+	Scope
 	Content string
 }
 

@@ -75,17 +75,14 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 func (dataCenter *DataCenterManager) HandlerMessage(ctx *gin.Context, userID string) error {
 	var msg Message.RequestMessage
 	if err := ctx.ShouldBind(&msg); err != nil {
-		fmt.Println("parse error", err)
+		return fmt.Errorf("parse error: %+v\n", err)
 	}
 
 	msg.Create_At = time.Now()
 	if err := dataCenter.Distribution(msg); err != nil {
 		return err
 	}
-	if err := dataCenter.Save(msg); err != nil {
-		return err
-	}
-	return nil
+	return dataCenter.Save(msg)
 }
 
 func (dataCenter *DataCenterManager) Distribution(msg Message.RequestMessage) error {
@@ -147,4 +144,8 @@ func (*DataCenterManager) GetMessage(ctx *gin.Context, userID, destID string) er
 	// sort.Sort(resultMessages)
 	// common.HttpSuccessResponse(ctx, resultMessages)
 	return nil
+}
+
+func getSessionID() string {
+	return ""
 }

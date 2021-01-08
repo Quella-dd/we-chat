@@ -16,35 +16,45 @@ var (
 	Redis    *redis.Client
 )
 
-func parseConfig() *MysqlConfig {
-	var conf Conf
-
+func parse() *Conf {
 	f, err := os.Open(confPath)
 	defer f.Close()
 
 	if err != nil {
 		panic("database config not found")
 	}
+
+	var conf Conf
 	if err := json.NewDecoder(f).Decode(&conf); err != nil {
 		panic(fmt.Sprintf("database config parse error: %+v\n", err))
 	}
-	return &conf.Mysql
+	return &conf
 }
 
-func getMysqlConnecURL(conf *MysqlConfig) string {
+func NewMysqlClient(conf MysqlConfig) string {
 	return fmt.Sprintf("%s:%s@(%s)/%s?charset=utf8&parseTime=True&loc=Local", conf.UserName, conf.PassWord, conf.Host, conf.DataName)
+}
+
+func NewRedisClient(option *redis.Options) (*redis.Client, error) {
+	client := redis.NewClient(option)
+
+	if err := client.Ping().Err(); err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 func InitDatabase() {
 	var err error
-
-	conf := parseConfig()
-
-	if DB, err = gorm.Open("mysql", getMysqlConnecURL(conf)); err != nil {
+	conf := parse()
+	if DB, err = gorm.Open("mysql", NewMysqlClient(conf.Mysql)); err != nil {
 		panic(err)
 	}
-
-	if Redis, err = NewRedisClient(); err != nil {
+	if Redis, err = NewRedisClient(&redis.Options{
+		Addr:     conf.Redis.Address,
+		Password: conf.Redis.Password,
+		DB:       0,
+	}); err != nil {
 		panic(err)
 	}
 }

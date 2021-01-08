@@ -7,56 +7,54 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	HeaderKey = "userID"
-)
-
-func ListGroup(ctx *gin.Context) {
-	userID := ctx.GetHeader(HeaderKey)
-	rooms, err := models.ManageEnv.GroupManager.ListGroup(userID)
+// API Group
+func ListGroups(c *gin.Context) {
+	userID := c.GetString("userID")
+	groups, err := models.ManageEnv.GroupManager.ListGroups(userID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, rooms)
+	c.JSON(http.StatusOK, groups)
 }
 
-func CreateGroup(ctx *gin.Context) {
-	var group *models.Group
-	userID := ctx.GetHeader(HeaderKey)
+func CreateGroup(c *gin.Context) {
+	userID := c.GetString("userID")
 
-	if err := ctx.ShouldBind(group); err != nil {
-		ctx.JSON(http.StatusBadRequest, nil)
+	var group *models.Group
+	if err := c.ShouldBind(group); err != nil {
+		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
 	if err := models.ManageEnv.GroupManager.CreateGroup(userID, group); err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, nil)
+	c.JSON(http.StatusOK, nil)
 }
 
 // update group.Name or group.Description
-func UpdateGroup(ctx *gin.Context) {
+func UpdateGroup(c *gin.Context) {
 	var group *models.Group
-	if err := ctx.ShouldBind(group); err != nil {
-		ctx.JSON(http.StatusBadRequest, nil)
+	if err := c.ShouldBind(group); err != nil {
+		c.JSON(http.StatusBadRequest, nil)
 	}
 	err := models.ManageEnv.GroupManager.UpdateGroup(group)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, nil)
+	c.JSON(http.StatusOK, nil)
 }
 
-func GetGroup(ctx *gin.Context) {
-	id := ctx.Param("id")
-	if room, err := models.ManageEnv.GroupManager.GetGroup(id); err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
-	} else {
-		ctx.JSON(http.StatusOK, room)
+func GetGroup(c *gin.Context) {
+	id := c.Param("id")
+	group, err := models.ManageEnv.GroupManager.GetGroup(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
+	c.JSON(http.StatusOK, group)
 }
 
 func DeleteGroup(ctx *gin.Context) {
@@ -67,23 +65,25 @@ func DeleteGroup(ctx *gin.Context) {
 	}
 }
 
-// action in group
-func AddUserToRoom(ctx *gin.Context) {
-	id := ctx.GetHeader("userID")
-	groupID := ctx.Param("id")
-	userID := ctx.Param("name")
+// action in group, JoinGroup and LeaveGroup
+func JoinGroup(c *gin.Context) {
+	id := c.GetString("userID")
 
-	if err := models.ManageEnv.UserManager.AddUserToGroup(id, groupID, userID); err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+	groupID := c.Param("id")
+	userID := c.Param("name")
+
+	if err := models.ManageEnv.UserManager.JoinGroup(id, groupID, userID); err != nil {
+		c.JSON(http.StatusInternalServerError, err)
 	}
 }
 
-func RemoveFromRoom(ctx *gin.Context) {
-	id := ctx.GetHeader("userID")
-	groupID := ctx.Param("id")
-	userID := ctx.Param("name")
+func LeaveGroup(c *gin.Context) {
+	id := c.GetString("userID")
 
-	if err := models.ManageEnv.UserManager.DeleteFromGroup(id, groupID, userID); err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+	groupID := c.Param("id")
+	userID := c.Param("name")
+
+	if err := models.ManageEnv.UserManager.LeaveGroup(id, groupID, userID); err != nil {
+		c.JSON(http.StatusInternalServerError, err)
 	}
 }

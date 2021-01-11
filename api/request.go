@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 // API Requests
 func ListRequests(c *gin.Context) {
 	id := c.GetString("userID")
@@ -15,7 +14,7 @@ func ListRequests(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
-	requests, err := models.ManageEnv.RequestManager.ListUserRequest(id)
+	requests, err := models.ManagerEnv.RequestManager.ListUserRequest(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 	}
@@ -24,7 +23,7 @@ func ListRequests(c *gin.Context) {
 
 func DeleteRequest(c *gin.Context) {
 	id := c.Param("id")
-	if err := models.ManageEnv.RequestManager.DeleteRequest(id); err !=  nil {
+	if err := models.ManagerEnv.RequestManager.DeleteRequest(id); err !=  nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err,
 		})
@@ -41,5 +40,5 @@ func AckRequest(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
-	models.ManageEnv.UserManager.AckRequet(requestID, destinationID)
+	models.ManagerEnv.UserManager.AckRequet(requestID, destinationID)
 }

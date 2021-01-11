@@ -28,8 +28,8 @@ func (evt *Event) setDefault(action string, sourceID, destinationID int) {
 	evt.SourceID = sourceID
 	evt.DestinationID = destinationID
 
-	requestUser, _ := ManageEnv.UserManager.GetUser(strconv.Itoa(evt.SourceID))
-	responseUser, _ := ManageEnv.UserManager.GetUser(strconv.Itoa(evt.DestinationID))
+	requestUser, _ := ManagerEnv.UserManager.GetUser(strconv.Itoa(evt.SourceID), "id")
+	responseUser, _ := ManagerEnv.UserManager.GetUser(strconv.Itoa(evt.DestinationID), "id")
 
 	evt.DisplaySourceName = requestUser.Name
 	evt.DisplayDestinationName = responseUser.Name

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-	"we-chat/database"
 	"we-chat/message"
 	Message "we-chat/message"
 
@@ -32,12 +31,10 @@ type DataCenterManager struct {
 }
 
 func NewDataCenterManager() *DataCenterManager {
-	database.DB.AutoMigrate(&Message.SessionMessage{})
-
 	dataCenterManager := &DataCenterManager{
 		Count:     10,
 		TimeOut:   time.Hour,
-		Redis:     database.Redis,
+		Redis:     ManagerEnv.redis,
 		Publisher: pubsub.NewPublisher(timeout, buffer),
 	}
 	go dataCenterManager.InitPubsub()
@@ -48,7 +45,6 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 	pubsub := dataCenter.Redis.Subscribe(UserActive)
 
 	for msg := range pubsub.Channel() {
-		fmt.Println("ready to send message of redis")
 		time.Sleep(time.Second)
 
 		var redisSendSuccess bool = true
@@ -59,7 +55,7 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 				fmt.Println("read redis error", err)
 			} else {
 				fmt.Printf("parse success: %+v\n", redisMessage)
-				if err := ManageEnv.WebsocketManager.SendUserMessage(redisMessage.GetUserIdentify(), redisMessage); err != nil {
+				if err := ManagerEnv.WebsocketManager.SendUserMessage(redisMessage, redisMessage.Scope.DestinationID); err != nil {
 					redisSendSuccess = false
 				}
 			}
@@ -72,80 +68,52 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 	}
 }
 
-func (dataCenter *DataCenterManager) HandlerMessage(ctx *gin.Context, userID string) error {
-	var msg Message.RequestMessage
-	if err := ctx.ShouldBind(&msg); err != nil {
-		return fmt.Errorf("parse error: %+v\n", err)
+
+// 1. create or update session
+// 2. Distribution =>  message.USERMESSAGE, message.ROOMMESSAGE, message.BORDERCASTMESSAGE
+// 3. Save with Mysql
+func (dataCenter *DataCenterManager) HandlerMessage(c *gin.Context, requestMessage message.RequestMessage) error {
+	var session Session
+
+	sessionID, _ := requestMessage.Scope.GetSession()
+	if err := ManagerEnv.DB.Find("id = ?", sessionID).Find(session).Error; err != nil {
+		if err := ManagerEnv.DB.Create(&requestMessage).Error; err != nil {
+			return err
+		}
 	}
 
-	msg.Create_At = time.Now()
-	if err := dataCenter.Distribution(msg); err != nil {
+	requestMessage.SessionID = sessionID
+	if err := dataCenter.Distribution(requestMessage); err != nil {
 		return err
 	}
-	return dataCenter.Save(msg)
+
+	return dataCenter.Save(requestMessage, session)
 }
 
 func (dataCenter *DataCenterManager) Distribution(msg Message.RequestMessage) error {
 	var err error
 	switch msg.Scope.Stype {
 	case message.USERMESSAGE:
-		err = ManageEnv.WebsocketManager.SendUserMessage(msg.GetUserIdentify(), msg)
+		err = ManagerEnv.WebsocketManager.SendUserMessage(msg, msg.Scope.DestinationID)
 		break
 	case message.ROOMMESSAGE:
-		err = ManageEnv.WebsocketManager.SendRoomMessage(msg)
+		err = ManagerEnv.WebsocketManager.SendRoomMessage(msg)
 		break
 	case message.BORDERCASTMESSAGE:
-		err = ManageEnv.WebsocketManager.SendBordcastMessage(msg)
+		err = ManagerEnv.WebsocketManager.SendBordcastMessage(msg)
 		break
 	}
 	return err
 }
 
-func (dataCenter *DataCenterManager) Save(msg Message.RequestMessage) error {
-	m := Message.NewMessage(msg.Scope.Ctype, msg.Content)
-
-	var message Message.SessionMessage
-
-	if err := database.DB.Where("source_id = ? and destination_id = ?", msg.SourceID, msg.DestinationID).Find(&message).Error; err != nil {
-		message.SourceID = msg.SourceID
-		message.DestinationID = msg.DestinationID
-		message.Messages = append(message.Messages, m)
-		// message.Messages = append(message.Messages, MessagesBody{
-		// 	Create_At: msg.CreateAt,
-		// 	Content:   msg.Content,
-		// })
-		if err := database.DB.Create(&message).Error; err != nil {
-			return err
-		}
+func (dataCenter *DataCenterManager) Save(message Message.RequestMessage, session Session) error {
+	if err := ManagerEnv.DB.Create(&message).Error; err != nil {
+		return err
 	}
 
-	message.Messages = append(message.Messages, m)
-	// message.Messages = append(message.Messages, MessagesBody{
-	// 	Create_At: msg.CreateAt,
-	// 	Content:   msg.Content,
-	// })
-	database.DB.Model(&message).Update("messages", message.Messages)
+	session.LatestContent = message.Content
+	if err := ManagerEnv.DB.Update("LatestContent", session.LatestContent).Error; err != nil {
+		return err
+	}
 	return nil
-}
-
-func (*DataCenterManager) GetMessage(ctx *gin.Context, userID, destID string) error {
-	// var resultMessages message.MessageInfos
-
-	// var requestMessage, reponseMessage Message.SessionMessage
-
-	// if err := database.DB.Where("source_id = ? and destination_id = ?", userID, destID).First(&requestMessage).Error; err == nil {
-	// 	resultMessages = append(resultMessages, *(requestMessage.GetMessageInfo())...)
-	// }
-
-	// if err := database.DB.Where("source_id = ? and destination_id = ?", destID, userID).First(&reponseMessage).Error; err == nil {
-	// 	resultMessages = append(resultMessages, *(reponseMessage.GetMessageInfo())...)
-	// }
-
-	// sort.Sort(resultMessages)
-	// common.HttpSuccessResponse(ctx, resultMessages)
-	return nil
-}
-
-func getSessionID() string {
-	return ""
 }

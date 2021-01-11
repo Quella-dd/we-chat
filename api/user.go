@@ -14,7 +14,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := models.ManageEnv.UserManager.Login(&user)
+	token, err := models.ManagerEnv.UserManager.Login(&user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -31,7 +31,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	err := models.ManageEnv.UserManager.Register(&user)
+	err := models.ManagerEnv.UserManager.Register(&user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 	}
@@ -44,7 +44,7 @@ func GetUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, "id must not be empty")
 		return
 	}
-	user, err := models.ManageEnv.UserManager.GetUser(id, "id")
+	user, err := models.ManagerEnv.UserManager.GetUser(id, "id")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -58,7 +58,7 @@ func SearchUsers(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, "name must not be empty")
 		return
 	}
-	users, err := models.ManageEnv.UserManager.SearchUsers(name)
+	users, err := models.ManagerEnv.UserManager.SearchUsers(name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -73,7 +73,7 @@ func GetFriends(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
-	users, err := models.ManageEnv.UserManager.ListFriends(id)
+	users, err := models.ManagerEnv.UserManager.ListFriends(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -88,7 +88,7 @@ func AddFriend(c *gin.Context) {
 	var option models.AddUserOptions
 	_ = c.ShouldBind(&option)
 
-	if err := models.ManageEnv.UserManager.AddFriend(id, addID, option.Content); err != nil {
+	if err := models.ManagerEnv.UserManager.AddFriend(id, addID, option.Content); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -105,7 +105,7 @@ func DeleteFriend(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
-	err := models.ManageEnv.UserManager.DeleteFriend(requestID, destinationID)
+	err := models.ManagerEnv.UserManager.DeleteFriend(requestID, destinationID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return

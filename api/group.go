@@ -10,7 +10,7 @@ import (
 // API Group
 func ListGroups(c *gin.Context) {
 	userID := c.GetString("userID")
-	groups, err := models.ManageEnv.GroupManager.ListGroups(userID)
+	groups, err := models.ManagerEnv.GroupManager.ListGroups(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -26,7 +26,7 @@ func CreateGroup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
-	if err := models.ManageEnv.GroupManager.CreateGroup(userID, group); err != nil {
+	if err := models.ManagerEnv.GroupManager.CreateGroup(userID, group); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
@@ -39,7 +39,7 @@ func UpdateGroup(c *gin.Context) {
 	if err := c.ShouldBind(group); err != nil {
 		c.JSON(http.StatusBadRequest, nil)
 	}
-	err := models.ManageEnv.GroupManager.UpdateGroup(group)
+	err := models.ManagerEnv.GroupManager.UpdateGroup(group)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -49,7 +49,7 @@ func UpdateGroup(c *gin.Context) {
 
 func GetGroup(c *gin.Context) {
 	id := c.Param("id")
-	group, err := models.ManageEnv.GroupManager.GetGroup(id)
+	group, err := models.ManagerEnv.GroupManager.GetGroup(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -59,7 +59,7 @@ func GetGroup(c *gin.Context) {
 
 func DeleteGroup(ctx *gin.Context) {
 	id := ctx.Param("id")
-	err := models.ManageEnv.GroupManager.DeleteGroup(id)
+	err := models.ManagerEnv.GroupManager.DeleteGroup(id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err)
 	}
@@ -72,7 +72,7 @@ func JoinGroup(c *gin.Context) {
 	groupID := c.Param("id")
 	userID := c.Param("name")
 
-	if err := models.ManageEnv.UserManager.JoinGroup(id, groupID, userID); err != nil {
+	if err := models.ManagerEnv.UserManager.JoinGroup(id, groupID, userID); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 	}
 }
@@ -83,7 +83,7 @@ func LeaveGroup(c *gin.Context) {
 	groupID := c.Param("id")
 	userID := c.Param("name")
 
-	if err := models.ManageEnv.UserManager.LeaveGroup(id, groupID, userID); err != nil {
+	if err := models.ManagerEnv.UserManager.LeaveGroup(id, groupID, userID); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 	}
 }

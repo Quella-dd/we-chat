@@ -2,7 +2,9 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"log"
 	"net/http"
 	"strings"
 	"we-chat/models"
@@ -20,11 +22,8 @@ var routers = []*router{
 	{method: http.MethodPost, path: "/login", handler: Login},
 	{method: http.MethodPost, path: "/register", handler: Register},
 
-	{method: http.MethodGet, path: "/sessions", handler: ListSessions},
-	{method: http.MethodDelete, path: "/session/:id", handler: DeleteSession},
-
 	{method: http.MethodGet, path: "/user/:id", handler: GetUser},
-	{method: http.MethodGet, path: "/user/:name", handler: SearchUsers},
+	{method: http.MethodGet, path: "/userSearch/:name", handler: SearchUsers},
 
 	{method: http.MethodGet, path: "/friends", handler: GetFriends},
 	{method: http.MethodPost, path: "/friend/:id", handler: AddFriend},
@@ -43,13 +42,16 @@ var routers = []*router{
 	{method: http.MethodPost, path: "/join/:name/group/:id", handler: JoinGroup},
 	{method: http.MethodPost, path: "/leave/:name/group/:id/", handler: LeaveGroup},
 
-
 	// TODO: Refactor
 	// create ws connection and receive message or event
 	{method: http.MethodGet, path: "/event", handler: HandlerEvent},
-	// dataCenterManger, 当用户A发送消息用户B, 则分别对用户A和用户B创建Session, 如果session存在，则更新session
+
+	// ListSessions, 聊天数据绑定在GetSession中
+	{method: http.MethodGet, path: "/sessions", handler: ListSessions},
+	{method: http.MethodPost, path: "/session/:id", handler: CreateSession},
+	{method: http.MethodGet, path: "/session/:id", handler: GetSession},
+	{method: http.MethodDelete, path: "/session/:id", handler: DeleteSession},
 	{method: http.MethodPost, path: "/sendMessage", handler: HandlerMessage},
-	{method: http.MethodGet, path: "/messages/:id", handler: GetMessage},
 
 	// TODO:
 	{method: http.MethodPost, path: "/RTCRequest", handler: sendRTCRequest},
@@ -58,15 +60,14 @@ var routers = []*router{
 }
 
 func InitRouter() {
-	engineer := gin.Default()
-	engineer.Use()
+	engine := gin.Default()
+	engine.Use()
 	for _, router := range routers {
-		engineer.Handle(router.method, router.path, validateHandler(router.handler))
+		engine.Handle(router.method, router.path, validateHandler(router.handler))
 	}
-	err := engineer.Run(":9999") // :8080
-	if err != nil {
-		panic(err)
-	}
+
+	port := fmt.Sprintf(":%s", models.ManagerConfig.Port)
+	log.Fatal(engine.Run(port))
 }
 
 func validateHandler(f gin.HandlerFunc) gin.HandlerFunc {
@@ -80,7 +81,7 @@ func validateHandler(f gin.HandlerFunc) gin.HandlerFunc {
 				return
 			} else {
 				t, err := jwt.ParseWithClaims(tokenAuth, &models.LoginClaims{}, func(token *jwt.Token) (interface{}, error) {
-					return []byte(models.SecretKey), nil
+					return []byte(models.ManagerConfig.SecretKey), nil
 				})
 
 				if err != nil {
@@ -98,5 +99,4 @@ func validateHandler(f gin.HandlerFunc) gin.HandlerFunc {
 		f(c)
 	}
 }
-
 // TODO: 封装error包, 用来wrap error

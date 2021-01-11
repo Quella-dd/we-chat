@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"we-chat/database"
 
 	"github.com/jinzhu/gorm"
 )
@@ -18,13 +17,12 @@ type Group struct {
 }
 
 func NewGroupManager() *GroupManager {
-	database.DB.AutoMigrate(&Group{})
 	return &GroupManager{}
 }
 
 func (*GroupManager) ListGroups(userID string) ([]Group, error) {
 	var groups []Group
-	if err := database.DB.Where("manager_id = ?", userID).Find(&groups).Error; err != nil {
+	if err := ManagerEnv.DB.Where("manager_id = ?", userID).Find(&groups).Error; err != nil {
 		return nil, err
 	}
 	return groups, nil
@@ -32,16 +30,16 @@ func (*GroupManager) ListGroups(userID string) ([]Group, error) {
 
 func (*GroupManager) CreateGroup(userID string, r *Group) error {
 	r.ManagerID = userID
-	return database.DB.Create(r).Error
+	return ManagerEnv.DB.Create(r).Error
 }
 
 func (*GroupManager) UpdateGroup(group *Group) error {
-	return database.DB.Model(group).Update("description", group.Description).Error
+	return ManagerEnv.DB.Model(group).Update("description", group.Description).Error
 }
 
 func (*GroupManager) GetGroup(id string) (*Group, error) {
 	var group Group
-	if err := database.DB.Where("id = ?", id).Find(&group).Error; err != nil {
+	if err := ManagerEnv.DB.Where("id = ?", id).Find(&group).Error; err != nil {
 		return nil, err
 	}
 	return &group, nil
@@ -49,12 +47,12 @@ func (*GroupManager) GetGroup(id string) (*Group, error) {
 
 func (*GroupManager) DeleteGroup(id string) error {
 	var group Group
-	if err := database.DB.First(&group, id).Error; err != nil {
+	if err := ManagerEnv.DB.First(&group, id).Error; err != nil {
 		return err
 	}
 
 	if group.ManagerID == id {
-		return database.DB.Unscoped().Delete(&group).Error
+		return ManagerEnv.DB.Unscoped().Delete(&group).Error
 	}
 	return errors.New("this user is not allow to delete this room")
 }
@@ -66,7 +64,7 @@ func (userManager *UserManager) JoinGroup(id, roomID, userID string) error {
 		return err
 	}
 
-	group, err := ManageEnv.GroupManager.GetGroup(roomID)
+	group, err := ManagerEnv.GroupManager.GetGroup(roomID)
 	if err != nil {
 		return err
 	}
@@ -76,7 +74,7 @@ func (userManager *UserManager) JoinGroup(id, roomID, userID string) error {
 			group.Childes = RelationStruct{}
 		}
 		group.Childes = append(group.Childes, userID)
-		err := database.DB.Model(group).Update("Childes", group.Childes).Error
+		err := ManagerEnv.DB.Model(group).Update("Childes", group.Childes).Error
 		if err != nil {
 			return err
 		}
@@ -90,7 +88,7 @@ func (userManager *UserManager) LeaveGroup(id, groupID, userID string) error {
 		return err
 	}
 
-	group, err := ManageEnv.GroupManager.GetGroup(groupID)
+	group, err := ManagerEnv.GroupManager.GetGroup(groupID)
 	if err != nil {
 		return err
 	}
@@ -101,7 +99,7 @@ func (userManager *UserManager) LeaveGroup(id, groupID, userID string) error {
 				group.Childes = append(group.Childes[:i], group.Childes[i+1:]...)
 			}
 		}
-		err := database.DB.Model(group).Update("childrenes", group.Childes).Error
+		err := ManagerEnv.DB.Model(group).Update("childrenes", group.Childes).Error
 		if err != nil {
 			return err
 		}

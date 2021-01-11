@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"time"
-	"we-chat/database"
+	Message "we-chat/message"
 )
 
 type SessionManager struct {}
 
 func NewSessionManager() *SessionManager {
-	database.DB.AutoMigrate(&Session{})
 	return &SessionManager{}
 }
 
@@ -20,7 +19,8 @@ type Session struct {
 	Src string
 	Destination string
 	LatestTime time.Time
-	LatestContent interface{}
+	//LatestContent interface{}
+	LatestContent string
 }
 
 // TODO: user's icon, display
@@ -34,12 +34,12 @@ func (s *SessionManager) ListSessions(id string) ([]SessionInfo, error) {
 	var sessionInfos []SessionInfo
 	var sessions []Session
 
-	if err := database.DB.Where("owner = ?", id).Find(&sessions).Error; err != nil {
+	if err := ManagerEnv.DB.Where("owner = ?", id).Find(&sessions).Error; err != nil {
 		return nil, nil
 	}
 
 	for _, session := range sessions {
-		user, err := ManageEnv.UserManager.GetUser(session.Destination, "id")
+		user, err := ManagerEnv.UserManager.GetUser(session.Destination, "id")
 		if err != nil {
 			fmt.Printf("user %s not found", user.Name)
 		}
@@ -51,10 +51,33 @@ func (s *SessionManager) ListSessions(id string) ([]SessionInfo, error) {
 	return sessionInfos, nil
 }
 
-func (s *SessionManager) CreateSession() error {
+func (s *SessionManager) CreateSession(session *Session) error {
+	if err := ManagerEnv.DB.Create(session).Error; err != nil {
+		return err
+	}
 	return nil
 }
 
+func (s *SessionManager) GetSession(id string) ([]Message.RequestMessage, error) {
+	var messages []Message.RequestMessage
+	if err := ManagerEnv.DB.Where("session_id = ?", id).Find(&messages).Error; err != nil {
+		return nil, err
+	}
+	return messages, nil
+}
+
+// delete Session and clean the message
 func (s *SessionManager) DeleteSession(id string) error {
-	return database.DB.Where("id = ?", id).Delete(&Session{}).Error
+	tx := ManagerEnv.DB.Begin()
+	if err := tx.Where("id = ?", id).Delete(&Session{}).Error; err != nil {
+		tx.Callback()
+		return err
+	}
+
+	if err := tx.Where("session_id = ?", id).Delete(&Message.RequestMessage{}).Error; err != nil {
+		tx.Callback()
+		return err
+	}
+	tx.Commit()
+	return nil
 }

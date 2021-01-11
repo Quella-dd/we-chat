@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"we-chat/message"
 	"we-chat/models"
 
 	"github.com/gin-gonic/gin"
@@ -9,23 +10,19 @@ import (
 
 func HandlerEvent(c *gin.Context) {
 	userID := c.GetString("userID")
-	models.ManageEnv.WebsocketManager.Handler(c, userID)
+	models.ManagerEnv.WebsocketManager.Handler(c, userID)
 }
 
 func HandlerMessage(c *gin.Context) {
-	userID := c.GetString("userID")
-	if err := models.ManageEnv.DataCenterManager.HandlerMessage(c, userID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+	var requestMessage message.RequestMessage
+
+	if err := c.ShouldBind(&requestMessage); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 	}
-}
 
-func GetMessage(c *gin.Context) {
-	userID := c.GetString("userID")
-	destID := c.Param("id")
-
-	if err := models.ManageEnv.DataCenterManager.GetMessage(c, userID, destID); err != nil {
+	if err := models.ManagerEnv.DataCenterManager.HandlerMessage(c, requestMessage); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

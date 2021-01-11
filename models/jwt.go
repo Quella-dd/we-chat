@@ -11,8 +11,6 @@ type LoginClaims struct {
 	jwt.StandardClaims
 }
 
-var SecretKey string = "quella1025"
-
 func GenerateToken(userName string, userID string, expireDuration time.Duration) (string, error) {
 	expire := time.Now().Add(expireDuration)
 
@@ -24,5 +22,5 @@ func GenerateToken(userName string, userID string, expireDuration time.Duration)
 		},
 	})
 
-	return token.SignedString([]byte(SecretKey))
+	return token.SignedString([]byte(ManagerConfig.SecretKey))
 }

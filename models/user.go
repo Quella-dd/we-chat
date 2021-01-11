@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"strconv"
 	"time"
@@ -40,7 +41,7 @@ func (u *RelationStruct) Scan(input interface{}) error {
 	return json.Unmarshal(input.([]byte), u)
 }
 
-func (*UserManager) Login(u *User) (string, error) {
+func (*UserManager) Login(c *gin.Context, u *User) (string, error) {
 	var user User
 
 	// TODO: 用户密码使用MD5进行解密并且验证
@@ -50,8 +51,14 @@ func (*UserManager) Login(u *User) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	token, err := GenerateToken(user.Name, strconv.Itoa(int(user.ID)), 24 * time.Hour)
 	if err != nil {
+		return "", err
+	}
+
+	// create ws
+	if err := ManagerEnv.WebsocketManager.InitWs(c, strconv.Itoa(int(u.ID))); err != nil {
 		return "", err
 	}
 	return token, nil

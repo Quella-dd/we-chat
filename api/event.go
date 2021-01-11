@@ -8,11 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func HandlerEvent(c *gin.Context) {
-	userID := c.GetString("userID")
-	models.ManagerEnv.WebsocketManager.Handler(c, userID)
-}
-
 func HandlerMessage(c *gin.Context) {
 	var requestMessage message.RequestMessage
 

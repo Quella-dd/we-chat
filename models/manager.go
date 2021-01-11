@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 	"we-chat/message"
 	Message "we-chat/message"
@@ -46,9 +47,7 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 
 	for msg := range pubsub.Channel() {
 		time.Sleep(time.Second)
-
 		var redisSendSuccess bool = true
-
 		for _, msg := range dataCenter.Redis.LRange(msg.Payload, 0, -1).Val() {
 			var redisMessage Message.RequestMessage
 			if err := json.Unmarshal([]byte(msg), &redisMessage); err != nil {
@@ -63,11 +62,10 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 
 		if redisSendSuccess {
 			dataCenter.Redis.Del(msg.Payload)
-			fmt.Println("redis message send to user success")
+			log.Fatal("redis message send to user success")
 		}
 	}
 }
-
 
 // 1. create or update session
 // 2. Distribution =>  message.USERMESSAGE, message.ROOMMESSAGE, message.BORDERCASTMESSAGE

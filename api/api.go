@@ -42,15 +42,12 @@ var routers = []*router{
 	{method: http.MethodPost, path: "/join/:name/group/:id", handler: JoinGroup},
 	{method: http.MethodPost, path: "/leave/:name/group/:id/", handler: LeaveGroup},
 
-	// TODO: Refactor
-	// create ws connection and receive message or event
-	{method: http.MethodGet, path: "/event", handler: HandlerEvent},
-
 	// ListSessions, 聊天数据绑定在GetSession中
 	{method: http.MethodGet, path: "/sessions", handler: ListSessions},
 	{method: http.MethodPost, path: "/session/:id", handler: CreateSession},
 	{method: http.MethodGet, path: "/session/:id", handler: GetSession},
 	{method: http.MethodDelete, path: "/session/:id", handler: DeleteSession},
+
 	{method: http.MethodPost, path: "/sendMessage", handler: HandlerMessage},
 
 	// TODO:

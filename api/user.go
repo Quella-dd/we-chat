@@ -9,12 +9,13 @@ import (
 
 func Login(c *gin.Context) {
 	var user models.User
+
 	if err := c.ShouldBind(&user); err != nil {
 		c.JSON(http.StatusBadRequest, err)
 		return
 	}
 
-	token, err := models.ManagerEnv.UserManager.Login(&user)
+	token, err := models.ManagerEnv.UserManager.Login(c, &user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return

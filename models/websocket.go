@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -28,19 +29,17 @@ func NewWebSocketManager() *WebsocketManager {
 	}
 }
 
-func (m *WebsocketManager) Handler(ctx *gin.Context, id string) error {
-	ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+func (m *WebsocketManager) InitWs(c *gin.Context, id string) error {
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return err
 	}
 
 	m.Connections.Store(id, ws)
-
 	// publish event of userActive
 	if err := ManagerEnv.DataCenterManager.Redis.Publish(UserActive, id).Err(); err != nil {
 		return err
 	}
-
 	return ws.WriteJSON(Event{
 		Action: Login_Event,
 	});

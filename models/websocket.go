@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -42,13 +41,16 @@ func (m *WebsocketManager) InitWs(c *gin.Context, id string) error {
 	}
 	return ws.WriteJSON(Event{
 		Action: Login_Event,
-	});
+	})
 }
 
 func (m *WebsocketManager) SendUserMessage(msg message.RequestMessage, destinationID string) error {
 	if ws, ok := m.Connections.Load(destinationID); ok {
 		if conn, ok := ws.(*websocket.Conn); ok {
-			return conn.WriteJSON(msg)
+			return conn.WriteJSON(struct {
+				Topic   string
+				Content interface{}
+			}{"message", msg})
 		}
 	}
 

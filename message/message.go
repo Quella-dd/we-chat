@@ -21,7 +21,7 @@ const (
 type RequestMessage struct {
 	gorm.Model
 	SessionID string
-	Content string
+	Content   string
 
 	Scope
 }

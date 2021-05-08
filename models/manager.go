@@ -71,21 +71,33 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 // 2. Distribution =>  message.USERMESSAGE, message.ROOMMESSAGE, message.BORDERCASTMESSAGE
 // 3. Save with Mysql
 func (dataCenter *DataCenterManager) HandlerMessage(c *gin.Context, requestMessage message.RequestMessage) error {
-	var session Session
+	var session *Session
 
 	sessionID, _ := requestMessage.Scope.GetSession()
 	if err := ManagerEnv.DB.Find("id = ?", sessionID).Find(session).Error; err != nil {
+		session, err = ManagerEnv.SessionManager.CreateSession(&Session{
+			Owner:         requestMessage.Scope.SourceID,
+			Src:           requestMessage.Scope.DestinationID,
+			LatestTime:    time.Now(),
+			LatestContent: requestMessage.Content,
+		})
+		if err != nil {
+			return fmt.Errorf("create Session failed, error: %+v\n", err)
+		}
+
+		requestMessage.ID = session.ID
+
 		if err := ManagerEnv.DB.Create(&requestMessage).Error; err != nil {
 			return err
 		}
 	}
 
-	requestMessage.SessionID = sessionID
+	// requestMessage.SessionID = sessionID
 	if err := dataCenter.Distribution(requestMessage); err != nil {
 		return err
 	}
 
-	return dataCenter.Save(requestMessage, session)
+	return dataCenter.Save(requestMessage, *session)
 }
 
 func (dataCenter *DataCenterManager) Distribution(msg Message.RequestMessage) error {
@@ -104,6 +116,7 @@ func (dataCenter *DataCenterManager) Distribution(msg Message.RequestMessage) er
 	return err
 }
 
+// 离线消息存储
 func (dataCenter *DataCenterManager) Save(message Message.RequestMessage, session Session) error {
 	if err := ManagerEnv.DB.Create(&message).Error; err != nil {
 		return err

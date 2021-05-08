@@ -2,11 +2,13 @@ package models
 
 import (
 	"fmt"
+
 	"github.com/go-redis/redis"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 
 	Message "we-chat/message"
+
 	"gopkg.in/ini.v1"
 )
 
@@ -24,15 +26,15 @@ type Manager struct {
 type ManagerIni struct {
 	Mysql
 	Redis
-	Port string
+	Port      string
 	SecretKey string
 }
 
 type Mysql struct {
 	UserName string
 	Password string
-	DBName string
-	Host string
+	DBName   string
+	Host     string
 }
 
 type Redis struct {
@@ -44,9 +46,9 @@ var ManagerEnv *Manager
 var ManagerConfig ManagerIni
 
 func InitManage() {
-	ManagerEnv =  &Manager{
-		UserManager: NewUserManager(),
-		GroupManager: NewGroupManager(),
+	ManagerEnv = &Manager{
+		UserManager:      NewUserManager(),
+		GroupManager:     NewGroupManager(),
 		WebsocketManager: NewWebSocketManager(),
 		//DataCenterManager: NewDataCenterManager(),
 		SessionManager: NewSessionManager(),

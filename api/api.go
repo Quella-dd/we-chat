@@ -3,11 +3,12 @@ package api
 import (
 	"errors"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"log"
 	"net/http"
 	"strings"
 	"we-chat/models"
+
+	"github.com/dgrijalva/jwt-go"
 
 	"github.com/gin-gonic/gin"
 )
@@ -72,7 +73,7 @@ func validateHandler(f gin.HandlerFunc) gin.HandlerFunc {
 		if !strings.Contains(c.Request.URL.Path, "/login") && !strings.Contains(c.Request.URL.Path, "/register") {
 			tokenAuth := c.GetHeader("token")
 			if tokenAuth == "" {
-				c.JSON(http.StatusUnauthorized, gin.H {
+				c.JSON(http.StatusUnauthorized, gin.H{
 					"error": errors.New("http.StatusUnauthorized"),
 				})
 				return
@@ -82,7 +83,7 @@ func validateHandler(f gin.HandlerFunc) gin.HandlerFunc {
 				})
 
 				if err != nil {
-					c.JSON(http.StatusUnauthorized, gin.H {
+					c.JSON(http.StatusUnauthorized, gin.H{
 						"error": errors.New("http.StatusUnauthorized"),
 					})
 					return
@@ -96,4 +97,5 @@ func validateHandler(f gin.HandlerFunc) gin.HandlerFunc {
 		f(c)
 	}
 }
+
 // TODO: 封装error包, 用来wrap error

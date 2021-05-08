@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 )
 
 type UserManager struct{}
@@ -21,8 +22,8 @@ type User struct {
 	gorm.Model
 	Name      string `form:"name"`
 	PassWord  string `form:"password"`
-	Email     string `form:"email"`
-	Validate bool
+	Email     string
+	Validate  bool
 	Relations RelationStruct `gorm:"type:json"`
 }
 
@@ -52,7 +53,7 @@ func (*UserManager) Login(c *gin.Context, u *User) (string, error) {
 		return "", err
 	}
 
-	token, err := GenerateToken(user.Name, strconv.Itoa(int(user.ID)), 24 * time.Hour)
+	token, err := GenerateToken(user.Name, strconv.Itoa(int(user.ID)), 24*time.Hour)
 	if err != nil {
 		return "", err
 	}
@@ -129,9 +130,9 @@ func (m *UserManager) AddFriend(id, addID, content string) error {
 }
 
 func (m *UserManager) DeleteFriend(id, friendID string) error {
-	self, _:= m.GetUser(id, "id")
+	self, _ := m.GetUser(id, "id")
 
-	if _,  err := m.GetUser(friendID, "id"); err != nil {
+	if _, err := m.GetUser(friendID, "id"); err != nil {
 		return errors.New("user not found")
 	}
 	for i, v := range self.Relations {
@@ -143,9 +144,9 @@ func (m *UserManager) DeleteFriend(id, friendID string) error {
 }
 
 func (m *UserManager) AckRequet(id, friendID string) error {
-	self, _:= m.GetUser(id, "id")
+	self, _ := m.GetUser(id, "id")
 
-	if _,  err := m.GetUser(friendID, "id"); err != nil {
+	if _, err := m.GetUser(friendID, "id"); err != nil {
 		return errors.New("user not found")
 	}
 	self.Relations = append(self.Relations, friendID)

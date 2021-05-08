@@ -1,9 +1,10 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"we-chat/models"
+
+	"github.com/gin-gonic/gin"
 )
 
 func ListSessions(c *gin.Context) {
@@ -28,7 +29,7 @@ func CreateSession(c *gin.Context) {
 		})
 	}
 
-	if err := models.ManagerEnv.SessionManager.CreateSession(&session); err != nil {
+	if _, err := models.ManagerEnv.SessionManager.CreateSession(&session); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

@@ -1,13 +1,14 @@
 package models
 
 import (
-	jwt "github.com/dgrijalva/jwt-go"
 	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 type LoginClaims struct {
 	UserName string
-	UserID string
+	UserID   string
 	jwt.StandardClaims
 }
 
@@ -16,7 +17,7 @@ func GenerateToken(userName string, userID string, expireDuration time.Duration)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, LoginClaims{
 		UserName: userName,
-		UserID: userID,
+		UserID:   userID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expire.Unix(),
 		},

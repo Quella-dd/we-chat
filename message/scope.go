@@ -9,7 +9,6 @@ import (
 
 type Scope struct {
 	Stype         int
-	//Ctype         string
 	RoomID        string `form:"room_id"`
 	SourceID      string `form:"source_id"`
 	DestinationID string `form:"destination_id"`
@@ -19,7 +18,6 @@ type Scope struct {
 func NewScope(stype int, roomID, sourceID, destinationID string) *Scope {
 	return &Scope{
 		Stype:         stype,
-		//Ctype:         ctype,
 		RoomID:        roomID,
 		SourceID:      sourceID,
 		DestinationID: destinationID,

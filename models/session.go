@@ -2,12 +2,13 @@ package models
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
 	"time"
 	Message "we-chat/message"
+
+	"github.com/jinzhu/gorm"
 )
 
-type SessionManager struct {}
+type SessionManager struct{}
 
 func NewSessionManager() *SessionManager {
 	return &SessionManager{}
@@ -15,18 +16,17 @@ func NewSessionManager() *SessionManager {
 
 type Session struct {
 	gorm.Model
-	Owner string
-	Src string
-	Destination string
-	LatestTime time.Time
-	//LatestContent interface{}
+	Owner         string
+	Src           string
+	Destination   string
+	LatestTime    time.Time
 	LatestContent string
 }
 
 // TODO: user's icon, display
 type SessionInfo struct {
 	Session
-	DisplayName string
+	DisplayName string // TODO: displayName, 每个用户存储一份自己的数据
 }
 
 // sort with latestTime
@@ -44,18 +44,18 @@ func (s *SessionManager) ListSessions(id string) ([]SessionInfo, error) {
 			fmt.Printf("user %s not found", user.Name)
 		}
 		sessionInfos = append(sessionInfos, SessionInfo{
-			Session: session,
+			Session:     session,
 			DisplayName: user.Name,
 		})
 	}
 	return sessionInfos, nil
 }
 
-func (s *SessionManager) CreateSession(session *Session) error {
+func (s *SessionManager) CreateSession(session *Session) (*Session, error) {
 	if err := ManagerEnv.DB.Create(session).Error; err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return session, nil
 }
 
 func (s *SessionManager) GetSession(id string) ([]Message.RequestMessage, error) {

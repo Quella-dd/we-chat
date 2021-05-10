@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"we-chat/models"
 
@@ -15,14 +16,14 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := models.ManagerEnv.UserManager.Login(c, &user)
+	u, token, err := models.ManagerEnv.UserManager.Login(c, &user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
 	c.Writer.Header().Set("token", token)
-	c.JSON(http.StatusOK, nil)
+	c.JSON(http.StatusOK, u)
 }
 
 func Register(c *gin.Context) {
@@ -32,9 +33,13 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	fmt.Println("created user", user.Name)
 	err := models.ManagerEnv.UserManager.Register(&user)
+	fmt.Println("created user error:", err)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 	c.JSON(http.StatusOK, user)
 }
@@ -93,7 +98,7 @@ func AddFriend(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
-	}  else {
+	} else {
 		c.JSON(http.StatusOK, nil)
 	}
 }
@@ -113,4 +118,3 @@ func DeleteFriend(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, nil)
 }
-

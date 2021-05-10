@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 	"we-chat/models"
 
 	"github.com/gin-gonic/gin"
@@ -22,12 +23,18 @@ func ListSessions(c *gin.Context) {
 }
 
 func CreateSession(c *gin.Context) {
+	id := c.GetString("userID")
 	var session models.Session
+
 	if err := c.ShouldBind(&session); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 	}
+
+	session.Owner = id
+	session.Src = id
+	session.LatestTime = time.Now()
 
 	if _, err := models.ManagerEnv.SessionManager.CreateSession(&session); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{

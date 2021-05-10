@@ -23,7 +23,7 @@ func ListRequests(c *gin.Context) {
 
 func DeleteRequest(c *gin.Context) {
 	id := c.Param("id")
-	if err := models.ManagerEnv.RequestManager.DeleteRequest(id); err !=  nil {
+	if err := models.ManagerEnv.RequestManager.DeleteRequest(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err,
 		})
@@ -33,12 +33,13 @@ func DeleteRequest(c *gin.Context) {
 }
 
 func AckRequest(c *gin.Context) {
-	requestID := c.GetString("userID")
-	destinationID := c.Param("id")
+	requestUserID := c.GetString("userID")
+	requestID := c.Param("id")
 
-	if requestID == "" || destinationID == "" {
+	if requestUserID == "" || requestID == "" {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
-	models.ManagerEnv.UserManager.AckRequet(requestID, destinationID)
+	models.ManagerEnv.RequestManager.AckRequest(requestID, requestUserID)
+
 }

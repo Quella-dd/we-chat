@@ -39,14 +39,16 @@ func (s *SessionManager) ListSessions(id string) ([]SessionInfo, error) {
 	}
 
 	for _, session := range sessions {
-		user, err := ManagerEnv.UserManager.GetUser(session.Destination, "id")
-		if err != nil {
-			fmt.Printf("user %s not found", user.Name)
+		if session.Destination != "" {
+			user, err := ManagerEnv.UserManager.GetUser(session.Destination, "id")
+			if err != nil {
+				fmt.Printf("user %s not found", user.Name)
+			}
+			sessionInfos = append(sessionInfos, SessionInfo{
+				Session:     session,
+				DisplayName: user.Name,
+			})
 		}
-		sessionInfos = append(sessionInfos, SessionInfo{
-			Session:     session,
-			DisplayName: user.Name,
-		})
 	}
 	return sessionInfos, nil
 }

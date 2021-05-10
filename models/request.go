@@ -2,10 +2,11 @@ package models
 
 import (
 	"fmt"
+
 	"github.com/jinzhu/gorm"
 )
 
-type RequestManager struct {}
+type RequestManager struct{}
 
 func NewRequestManager() *RequestManager {
 	return &RequestManager{}
@@ -13,10 +14,10 @@ func NewRequestManager() *RequestManager {
 
 type Request struct {
 	gorm.Model
-	UserID string
-	AddID string
+	UserID  string
+	AddID   string
 	Content string
-	Status bool
+	Status  bool
 }
 
 func (m *RequestManager) CreateRequest(id, addID, content string) error {
@@ -58,5 +59,20 @@ func (m *RequestManager) AckRequest(id, userID string) error {
 		return fmt.Errorf("%s not permission to resolve %s's request", userID, request.AddID)
 	}
 
-	return ManagerEnv.UserManager.AckRequet(request.UserID, request.AddID)
+	tx := ManagerEnv.DB.Begin()
+	if err := tx.Model(&request).Updates(Request{Status: true}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := ManagerEnv.UserManager.AckRequet(request.UserID, request.AddID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := ManagerEnv.UserManager.AckRequet(request.AddID, request.UserID); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	tx.Commit()
+	return nil
 }

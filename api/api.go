@@ -45,13 +45,13 @@ var routers = []*router{
 
 	// ListSessions, 聊天数据绑定在GetSession中
 	{method: http.MethodGet, path: "/sessions", handler: ListSessions},
-	{method: http.MethodPost, path: "/session/:id", handler: CreateSession},
+	{method: http.MethodPost, path: "/session", handler: CreateSession},
 	{method: http.MethodGet, path: "/session/:id", handler: GetSession},
 	{method: http.MethodDelete, path: "/session/:id", handler: DeleteSession},
 
 	{method: http.MethodPost, path: "/sendMessage", handler: HandlerMessage},
 
-	// TODO:
+	// TODO
 	{method: http.MethodPost, path: "/RTCRequest", handler: sendRTCRequest},
 	{method: http.MethodPost, path: "/RTCRequest/:id/", handler: handlerRTCRequest},
 	{method: http.MethodPost, path: "/RTCRequest/:id/hangDown", handler: hangDownRTCRequest},

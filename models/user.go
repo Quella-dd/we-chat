@@ -22,7 +22,7 @@ type User struct {
 	gorm.Model
 	Name      string `form:"name"`
 	PassWord  string `form:"password"`
-	Email     string
+	Email     string `form:"email"`
 	Validate  bool
 	Relations RelationStruct `gorm:"type:json"`
 }
@@ -42,7 +42,7 @@ func (u *RelationStruct) Scan(input interface{}) error {
 	return json.Unmarshal(input.([]byte), u)
 }
 
-func (*UserManager) Login(c *gin.Context, u *User) (string, error) {
+func (*UserManager) Login(c *gin.Context, u *User) (*User, string, error) {
 	var user User
 
 	// TODO: 用户密码使用MD5进行解密并且验证
@@ -50,24 +50,27 @@ func (*UserManager) Login(c *gin.Context, u *User) (string, error) {
 
 	err := ManagerEnv.DB.Where(u).First(&user).Error
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 
 	token, err := GenerateToken(user.Name, strconv.Itoa(int(user.ID)), 24*time.Hour)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 
-	// create ws
-	if err := ManagerEnv.WebsocketManager.InitWs(c, strconv.Itoa(int(u.ID))); err != nil {
-		return "", err
-	}
-	return token, nil
+	// TODO: ws request must be wss:
+	// create ws,
+
+	// if err := ManagerEnv.WebsocketManager.InitWs(c, strconv.Itoa(int(u.ID))); err != nil {
+	// 	return "", err
+	// }
+
+	return &user, token, nil
 }
 
 func (m *UserManager) Register(user *User) error {
 	if _, err := m.GetUser(user.Name, "name"); err == nil {
-		return errors.New("username must not be duplicate")
+		return fmt.Errorf("username: %+v must not be duplicate", user.Name)
 	}
 
 	// TODO: 用户密码使用MD5进行加密并保存在数据库中
@@ -108,12 +111,14 @@ func (m *UserManager) SearchUsers(name string) ([]User, error) {
 // ----------------------- Friends
 func (m *UserManager) ListFriends(id string) ([]User, error) {
 	var users []User
+
 	user, err := m.GetUser(id, "id")
 	if err != nil {
 		return nil, err
 	}
+
 	if err := ManagerEnv.DB.Find(&users, []string(user.Relations)).Error; err != nil {
-		return nil, fmt.Errorf("ListFriend error:", err)
+		return nil, fmt.Errorf("ListFriend error: %+v\n", err)
 	}
 	return users, nil
 }
@@ -149,23 +154,12 @@ func (m *UserManager) AckRequet(id, friendID string) error {
 	if _, err := m.GetUser(friendID, "id"); err != nil {
 		return errors.New("user not found")
 	}
+	fmt.Println("before append:", self.Relations)
 	self.Relations = append(self.Relations, friendID)
+	fmt.Println("after append:", self.Relations)
 
-	// 更新user relations and request's status, 因此要开启一个事务，保证数据一致性
-	tx := ManagerEnv.DB.Begin()
-	if err := tx.Model(&self).Update("relations", self.Relations).Error; err != nil {
-		tx.Rollback()
+	if err := ManagerEnv.DB.Model(&self).Update("relations", self.Relations).Error; err != nil {
 		return err
 	}
-	request, err := ManagerEnv.RequestManager.GetRequest(id)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	if err := tx.Model(&request).Updates(Request{Status: true}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-	tx.Commit()
 	return nil
 }

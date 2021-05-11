@@ -9,7 +9,6 @@ import (
 	Message "we-chat/message"
 
 	"github.com/docker/docker/pkg/pubsub"
-	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 )
 
@@ -53,9 +52,24 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 			if err := json.Unmarshal([]byte(msg), &redisMessage); err != nil {
 				fmt.Println("read redis error", err)
 			} else {
-				fmt.Printf("parse success: %+v\n", redisMessage)
-				if err := ManagerEnv.WebsocketManager.SendUserMessage(redisMessage, redisMessage.Scope.DestinationID); err != nil {
-					redisSendSuccess = false
+				// fmt.Printf("parse success: %+v\n", redisMessage)
+				// if err := ManagerEnv.WebsocketManager.SendUserMessage(redisMessage, redisMessage.Scope.DestinationID); err != nil {
+				// 	redisSendSuccess = false
+				// }
+				var resultRequestMessage Message.RequestMessage
+
+				resultRequestMessage.DestinationID = redisMessage.OwnerID
+				resultRequestMessage.OwnerID = redisMessage.DestinationID
+				resultRequestMessage.Content = redisMessage.Content
+
+				session, err := ManagerEnv.DataCenterManager.UpdateOrCreateSession(resultRequestMessage)
+				if err != nil {
+					fmt.Println("Send UserMessage Error:", err)
+				}
+				redisMessage.SessionID = fmt.Sprintf("%+v", session.ID)
+
+				if err := ManagerEnv.DataCenterManager.Save(redisMessage, *session); err != nil {
+					fmt.Println("pubsub HandlerMessage Error:", err)
 				}
 			}
 		}
@@ -67,37 +81,65 @@ func (dataCenter *DataCenterManager) InitPubsub() {
 	}
 }
 
-// 1. create or update session
-// 2. Distribution =>  message.USERMESSAGE, message.ROOMMESSAGE, message.BORDERCASTMESSAGE
-// 3. Save with Mysql
-func (dataCenter *DataCenterManager) HandlerMessage(c *gin.Context, requestMessage message.RequestMessage) error {
-	var session *Session
-
-	sessionID, _ := requestMessage.Scope.GetSession()
-	if err := ManagerEnv.DB.Find("id = ?", sessionID).Find(session).Error; err != nil {
-		session, err = ManagerEnv.SessionManager.CreateSession(&Session{
-			Owner:         requestMessage.Scope.SourceID,
-			Src:           requestMessage.Scope.DestinationID,
-			LatestTime:    time.Now(),
-			LatestContent: requestMessage.Content,
-		})
-		if err != nil {
-			return fmt.Errorf("create Session failed, error: %+v\n", err)
-		}
-
-		requestMessage.ID = session.ID
-
-		if err := ManagerEnv.DB.Create(&requestMessage).Error; err != nil {
-			return err
-		}
-	}
-
-	// requestMessage.SessionID = sessionID
-	if err := dataCenter.Distribution(requestMessage); err != nil {
+func (dataCenter *DataCenterManager) HandlerMessage(requestMessage message.RequestMessage) error {
+	session, err := dataCenter.UpdateOrCreateSession(requestMessage)
+	if err != nil {
 		return err
 	}
 
-	return dataCenter.Save(requestMessage, *session)
+	requestMessage.SessionID = fmt.Sprintf("%+v", session.ID)
+
+	// 消息存储在数据库
+	if err := dataCenter.Save(requestMessage, *session); err != nil {
+		return nil
+	}
+
+	// 消息下发
+	if err := dataCenter.Distribution(requestMessage); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (dataCenter *DataCenterManager) UpdateOrCreateSession(requestMessage message.RequestMessage) (*Session, error) {
+	var session *Session
+	var err error
+
+	fmt.Println("requestMessage.Scope:", requestMessage.Scope)
+	session, err = getSessionwithScope(requestMessage.Scope)
+
+	if err != nil {
+		session, err = ManagerEnv.SessionManager.CreateSession(&Session{
+			LatestTime: time.Now(),
+			Scope: Message.Scope{
+				OwnerID:       requestMessage.Scope.OwnerID,
+				DestinationID: requestMessage.Scope.DestinationID,
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("create Session failed, error: %+v\n", err)
+		}
+	}
+	return session, nil
+}
+
+func (dataCenter *DataCenterManager) GetMessages(id string) ([]message.RequestMessage, error) {
+	fmt.Println("GetMessages:", id)
+	var messages []message.RequestMessage
+
+	if err := ManagerEnv.DB.Where("session_id = ?", id).Find(&messages).Error; err != nil {
+		return nil, err
+	}
+
+	for _, message := range messages {
+		user, err := ManagerEnv.UserManager.GetUser(message.OwnerID, "id")
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			message.OwnerName = user.Name
+		}
+	}
+	return messages, nil
 }
 
 func (dataCenter *DataCenterManager) Distribution(msg Message.RequestMessage) error {
@@ -123,8 +165,18 @@ func (dataCenter *DataCenterManager) Save(message Message.RequestMessage, sessio
 	}
 
 	session.LatestContent = message.Content
-	if err := ManagerEnv.DB.Update("LatestContent", session.LatestContent).Error; err != nil {
+
+	// some bug
+	if err := ManagerEnv.DB.Find(&session).Update("LatestContent", session.LatestContent).Error; err != nil {
 		return err
 	}
 	return nil
+}
+
+func getSessionwithScope(scope Message.Scope) (*Session, error) {
+	var session Session
+	if err := ManagerEnv.DB.Where("owner_id = ? AND destination_id = ?", scope.OwnerID, scope.DestinationID).Find(&session).Error; err != nil {
+		return nil, err
+	}
+	return &session, nil
 }

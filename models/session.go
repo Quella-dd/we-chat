@@ -16,31 +16,27 @@ func NewSessionManager() *SessionManager {
 
 type Session struct {
 	gorm.Model
-	Owner         string
-	Src           string
-	Destination   string
+	Message.Scope
 	LatestTime    time.Time
 	LatestContent string
 }
 
-// TODO: user's icon, display
 type SessionInfo struct {
 	Session
 	DisplayName string // TODO: displayName, 每个用户存储一份自己的数据
 }
 
-// sort with latestTime
 func (s *SessionManager) ListSessions(id string) ([]SessionInfo, error) {
 	var sessionInfos []SessionInfo
 	var sessions []Session
 
-	if err := ManagerEnv.DB.Where("owner = ?", id).Find(&sessions).Error; err != nil {
+	if err := ManagerEnv.DB.Where("owner_id = ?", id).Find(&sessions).Error; err != nil {
 		return nil, nil
 	}
 
 	for _, session := range sessions {
-		if session.Destination != "" {
-			user, err := ManagerEnv.UserManager.GetUser(session.Destination, "id")
+		if session.OwnerID != "" {
+			user, err := ManagerEnv.UserManager.GetUser(session.DestinationID, "id")
 			if err != nil {
 				fmt.Printf("user %s not found", user.Name)
 			}
@@ -54,10 +50,14 @@ func (s *SessionManager) ListSessions(id string) ([]SessionInfo, error) {
 }
 
 func (s *SessionManager) CreateSession(session *Session) (*Session, error) {
-	if err := ManagerEnv.DB.Create(session).Error; err != nil {
-		return nil, err
+	var resultSession Session
+	if err := ManagerEnv.DB.Where("owner_id = ? AND destination_id = ?", session.OwnerID, session.DestinationID).Find(&resultSession).Error; err != nil {
+		if err := ManagerEnv.DB.Create(session).Error; err != nil {
+			return nil, err
+		}
+		return session, nil
 	}
-	return session, nil
+	return &resultSession, nil
 }
 
 func (s *SessionManager) GetSession(id string) ([]Message.RequestMessage, error) {

@@ -20,6 +20,7 @@ const (
 
 type RequestMessage struct {
 	gorm.Model
+	OwnerName string
 	SessionID string
 	Content   string
 

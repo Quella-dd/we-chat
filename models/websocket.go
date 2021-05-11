@@ -1,10 +1,12 @@
 package models
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
 	"we-chat/message"
+	Message "we-chat/message"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -35,7 +37,7 @@ func (m *WebsocketManager) InitWs(c *gin.Context, id string) error {
 	}
 
 	m.Connections.Store(id, ws)
-	// publish event of userActive
+
 	if err := ManagerEnv.DataCenterManager.Redis.Publish(UserActive, id).Err(); err != nil {
 		return err
 	}
@@ -45,7 +47,24 @@ func (m *WebsocketManager) InitWs(c *gin.Context, id string) error {
 }
 
 func (m *WebsocketManager) SendUserMessage(msg message.RequestMessage, destinationID string) error {
+	var resultRequestMessage Message.RequestMessage
+
+	resultRequestMessage.DestinationID = msg.OwnerID
+	resultRequestMessage.OwnerID = msg.DestinationID
+	resultRequestMessage.Content = msg.Content
+
+	session, err := ManagerEnv.DataCenterManager.UpdateOrCreateSession(resultRequestMessage)
+	if err != nil {
+		fmt.Println("Send UserMessage Error:", err)
+	}
+	msg.SessionID = fmt.Sprintf("%+v", session.ID)
+
+	if err := ManagerEnv.DataCenterManager.Save(msg, *session); err != nil {
+		return nil
+	}
+
 	if ws, ok := m.Connections.Load(destinationID); ok {
+		// 3、 应该不需要将消息通过ws发送给客户端， 应该将消息包装为一个event发送给客户端
 		if conn, ok := ws.(*websocket.Conn); ok {
 			return conn.WriteJSON(struct {
 				Topic   string
@@ -54,14 +73,14 @@ func (m *WebsocketManager) SendUserMessage(msg message.RequestMessage, destinati
 		}
 	}
 
-	// 如果用户离线，将message保存到离线数据库， redis列表的Key 为identify (list)
+	// 如果用户离线，将message保存到离线数据库， redis列表的Key userID 作为唯一主键(list)
+	// 当用户再次上线的时候，执行
+	// 3、 应该不需要将消息通过ws发送给客户端， 应该将消息包装为一个event发送给客户端
 	if err := ManagerEnv.DataCenterManager.Redis.RPush(destinationID, msg).Err(); err != nil {
 		return err
 	}
 
-	// value of return descide save the offline data in sql
 	return nil
-	// return errors.New(fmt.Sprintf("websocket conn recode not fond: %+v\n", identify))
 }
 
 func (m *WebsocketManager) SendRoomMessage(msg message.RequestMessage) error {

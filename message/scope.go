@@ -1,36 +1,29 @@
 //  用于判定发送的消息的作用域。比如是系统公告，群聊消息，个人私聊消息等
 package message
 
-import (
-	"crypto/md5"
-	"encoding/hex"
-	"encoding/json"
-)
-
 type Scope struct {
 	Stype         int
 	RoomID        string `form:"room_id"`
-	SourceID      string `form:"source_id"`
+	OwnerID       string `form:"owner_id"`
 	DestinationID string `form:"destination_id"`
 }
 
-//func NewScope(stype int, ctype string, roomID, sourceID, destinationID int) *Scope {
-func NewScope(stype int, roomID, sourceID, destinationID string) *Scope {
+func NewScope(stype int, roomID, ownerID, destinationID string) *Scope {
 	return &Scope{
 		Stype:         stype,
 		RoomID:        roomID,
-		SourceID:      sourceID,
+		OwnerID:       ownerID,
 		DestinationID: destinationID,
 	}
 }
 
 func (s *Scope) GetSession() (string, error) {
-	hash := md5.New()
-	b, err := json.Marshal(s)
-	if err != nil {
-		return "", err
-	}
-	hash.Write(b)
-	res := hash.Sum(nil)
-	return hex.EncodeToString(res), nil
+	// var session models.DataCenterManager
+
+	// if err := models.ManagerEnv.DB.Find("owner_id = ? AND destination_id = ?", s.OwnerID, s.DestinationID).Find(&session).Error; err != nil {
+	// 	return "", err
+	// }
+
+	// return session.ID, nil
+	return "", nil
 }

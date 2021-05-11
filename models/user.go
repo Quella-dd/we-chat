@@ -46,8 +46,6 @@ func (*UserManager) Login(c *gin.Context, u *User) (*User, string, error) {
 	var user User
 
 	// TODO: 用户密码使用MD5进行解密并且验证
-	//user.PassWord = md5Password(user.PassWord)
-
 	err := ManagerEnv.DB.Where(u).First(&user).Error
 	if err != nil {
 		return nil, "", err
@@ -57,14 +55,6 @@ func (*UserManager) Login(c *gin.Context, u *User) (*User, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-
-	// TODO: ws request must be wss:
-	// create ws,
-
-	// if err := ManagerEnv.WebsocketManager.InitWs(c, strconv.Itoa(int(u.ID))); err != nil {
-	// 	return "", err
-	// }
-
 	return &user, token, nil
 }
 
@@ -72,9 +62,7 @@ func (m *UserManager) Register(user *User) error {
 	if _, err := m.GetUser(user.Name, "name"); err == nil {
 		return fmt.Errorf("username: %+v must not be duplicate", user.Name)
 	}
-
 	// TODO: 用户密码使用MD5进行加密并保存在数据库中
-	//user.PassWord = md5Password(user.PassWord)
 	if err := ManagerEnv.DB.Create(user).Error; err != nil {
 		return err
 	}
@@ -154,9 +142,8 @@ func (m *UserManager) AckRequet(id, friendID string) error {
 	if _, err := m.GetUser(friendID, "id"); err != nil {
 		return errors.New("user not found")
 	}
-	fmt.Println("before append:", self.Relations)
+
 	self.Relations = append(self.Relations, friendID)
-	fmt.Println("after append:", self.Relations)
 
 	if err := ManagerEnv.DB.Model(&self).Update("relations", self.Relations).Error; err != nil {
 		return err

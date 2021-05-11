@@ -94,3 +94,16 @@ TODO:
     session怎么生成唯一ID, A -> B 和B -> A 不是一个session,　但是聊天记录是绑定在session下面的，怎么处理？
 
     暂时先A -> B 和B -> A公用一个session
+
+
+    session {
+        Scope {
+            OwnerID
+            DestinationID
+        }
+    }
+
+
+    1. 每个用户拥有自己的session列表
+    2. 将聊天记录存储到对应的session中， 并将聊天记录存储到数据库中， 用于消息漫游
+    3. A -> B发送消息，当B接收到消息后，查询B -> A的session，如果该session不存在，则创建对应的session, 并存储对应的聊天记录

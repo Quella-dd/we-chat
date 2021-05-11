@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 	"we-chat/models"
@@ -24,16 +25,23 @@ func ListSessions(c *gin.Context) {
 
 func CreateSession(c *gin.Context) {
 	id := c.GetString("userID")
+
 	var session models.Session
 
-	if err := c.ShouldBind(&session); err != nil {
+	var sessionInfo struct {
+		DestinationID string
+	}
+
+	if err := c.ShouldBind(&sessionInfo); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 	}
 
-	session.Owner = id
-	session.Src = id
+	fmt.Printf("create Session: %+v\n", sessionInfo)
+
+	session.OwnerID = id
+	session.DestinationID = sessionInfo.DestinationID
 	session.LatestTime = time.Now()
 
 	if _, err := models.ManagerEnv.SessionManager.CreateSession(&session); err != nil {

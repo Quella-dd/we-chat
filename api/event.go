@@ -10,12 +10,12 @@ import (
 
 func GetMessages(c *gin.Context) {
 	id := c.Param("id")
-	if messages, err := models.ManagerEnv.DataCenterManager.GetMessages(id); err != nil {
+	if messagesInfos, err := models.ManagerEnv.DataCenterManager.GetMessages(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 	} else {
-		c.JSON(http.StatusOK, messages)
+		c.JSON(http.StatusOK, messagesInfos)
 	}
 }
 

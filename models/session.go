@@ -35,7 +35,7 @@ func (s *SessionManager) ListSessions(id string) ([]SessionInfo, error) {
 	}
 
 	for _, session := range sessions {
-		if session.OwnerID != "" {
+		if session.OwnerID != "" && session.DestinationID != "" {
 			user, err := ManagerEnv.UserManager.GetUser(session.DestinationID, "id")
 			if err != nil {
 				fmt.Printf("user %s not found", user.Name)
@@ -44,6 +44,10 @@ func (s *SessionManager) ListSessions(id string) ([]SessionInfo, error) {
 				Session:     session,
 				DisplayName: user.Name,
 			})
+		} else {
+			sessionInfos = append(sessionInfos, SessionInfo{
+				Session: session,
+			})
 		}
 	}
 	return sessionInfos, nil
@@ -51,11 +55,20 @@ func (s *SessionManager) ListSessions(id string) ([]SessionInfo, error) {
 
 func (s *SessionManager) CreateSession(session *Session) (*Session, error) {
 	var resultSession Session
-	if err := ManagerEnv.DB.Where("owner_id = ? AND destination_id = ?", session.OwnerID, session.DestinationID).Find(&resultSession).Error; err != nil {
-		if err := ManagerEnv.DB.Create(session).Error; err != nil {
-			return nil, err
+	if session.RoomID != "" {
+		if err := ManagerEnv.DB.Where("owner_id = ? AND destination_id = ?", session.OwnerID, session.DestinationID).Find(&resultSession).Error; err != nil {
+			if err := ManagerEnv.DB.Create(session).Error; err != nil {
+				return nil, err
+			}
+			return session, nil
 		}
-		return session, nil
+	} else {
+		if err := ManagerEnv.DB.Where("owner_id = ? AND destination_id = ? AND room_id = ?", session.OwnerID, session.DestinationID, session.RoomID).Find(&resultSession).Error; err != nil {
+			if err := ManagerEnv.DB.Create(session).Error; err != nil {
+				return nil, err
+			}
+			return session, nil
+		}
 	}
 	return &resultSession, nil
 }

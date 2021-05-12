@@ -29,6 +29,8 @@ func CreateSession(c *gin.Context) {
 	var session models.Session
 
 	var sessionInfo struct {
+		Stype         int
+		RoomID        string
 		DestinationID string
 	}
 
@@ -41,7 +43,11 @@ func CreateSession(c *gin.Context) {
 	fmt.Printf("create Session: %+v\n", sessionInfo)
 
 	session.OwnerID = id
+
+	session.Stype = sessionInfo.Stype
+	session.RoomID = sessionInfo.RoomID
 	session.DestinationID = sessionInfo.DestinationID
+
 	session.LatestTime = time.Now()
 
 	if _, err := models.ManagerEnv.SessionManager.CreateSession(&session); err != nil {

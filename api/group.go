@@ -21,12 +21,15 @@ func ListGroups(c *gin.Context) {
 func CreateGroup(c *gin.Context) {
 	userID := c.GetString("userID")
 
-	var group *models.Group
-	if err := c.ShouldBind(group); err != nil {
-		c.JSON(http.StatusBadRequest, nil)
+	var group models.Group
+	if err := c.ShouldBind(&group); err != nil {
+		c.JSON(http.StatusBadRequest, err)
 		return
 	}
-	if err := models.ManagerEnv.GroupManager.CreateGroup(userID, group); err != nil {
+
+	group.Childes = append(group.Childes, userID)
+
+	if err := models.ManagerEnv.GroupManager.CreateGroup(userID, &group); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}

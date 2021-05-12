@@ -43,7 +43,6 @@ var routers = []*router{
 	{method: http.MethodPost, path: "/join/:name/group/:id", handler: JoinGroup},
 	{method: http.MethodPost, path: "/leave/:name/group/:id/", handler: LeaveGroup},
 
-	// ListSessions, 聊天数据绑定在GetSession中
 	// TODO: 可以采取多重索引来加速message的查询
 	{method: http.MethodGet, path: "/sessions", handler: ListSessions},
 	{method: http.MethodPost, path: "/session", handler: CreateSession},

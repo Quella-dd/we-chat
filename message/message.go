@@ -5,10 +5,10 @@ import (
 )
 
 const (
-	USERMESSAGE       = iota // 私聊时的文本
-	RTCMESSAGE               // 私聊时的实时语言/视频
-	ROOMMESSAGE              // 群聊时的文本
-	BORDERCASTMESSAGE        // 系统公告
+	USERMESSAGE = iota // 私聊时的文本
+	// RTCMESSAGE               // 私聊时的实时语言/视频
+	ROOMMESSAGE       // 群聊时的文本
+	BORDERCASTMESSAGE // 系统公告
 )
 
 const (

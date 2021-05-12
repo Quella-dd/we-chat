@@ -12,8 +12,8 @@ type Group struct {
 	gorm.Model
 	Name        string `form:"name"`
 	ManagerID   string
-	Description string        `form:"description"`
-	Childes RelationStruct `gorm:"type:json"`
+	Description string         `form:"description"`
+	Childes     RelationStruct `gorm:"type:json"`
 }
 
 func NewGroupManager() *GroupManager {

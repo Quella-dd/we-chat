@@ -49,15 +49,26 @@ func (m *WebsocketManager) InitWs(c *gin.Context, id string) error {
 func (m *WebsocketManager) SendUserMessage(msg message.RequestMessage, destinationID string) error {
 	var resultRequestMessage Message.RequestMessage
 
-	resultRequestMessage.DestinationID = msg.OwnerID
-	resultRequestMessage.OwnerID = msg.DestinationID
+	resultRequestMessage.Stype = msg.Stype
 	resultRequestMessage.Content = msg.Content
+	resultRequestMessage.OwnerID = destinationID
+
+	if msg.RoomID != "" {
+		resultRequestMessage.RoomID = msg.RoomID
+	} else {
+		resultRequestMessage.DestinationID = msg.OwnerID
+	}
 
 	session, err := ManagerEnv.DataCenterManager.UpdateOrCreateSession(resultRequestMessage)
 	if err != nil {
 		fmt.Println("Send UserMessage Error:", err)
 	}
+
 	msg.SessionID = fmt.Sprintf("%+v", session.ID)
+	user, err := ManagerEnv.UserManager.GetUser(msg.OwnerID, "id")
+	if err == nil {
+		msg.OwnerName = user.Name
+	}
 
 	if err := ManagerEnv.DataCenterManager.Save(msg, *session); err != nil {
 		return nil
@@ -88,8 +99,11 @@ func (m *WebsocketManager) SendRoomMessage(msg message.RequestMessage) error {
 	if err != nil {
 		return err
 	}
+
 	for _, v := range room.Childes {
-		m.SendUserMessage(msg, v)
+		if v != msg.OwnerID {
+			m.SendUserMessage(msg, v)
+		}
 	}
 	return nil
 }

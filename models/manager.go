@@ -89,6 +89,11 @@ func (dataCenter *DataCenterManager) HandlerMessage(requestMessage message.Reque
 
 	requestMessage.SessionID = fmt.Sprintf("%+v", session.ID)
 
+	user, err := ManagerEnv.UserManager.GetUser(requestMessage.OwnerID, "id")
+	if err == nil {
+		requestMessage.OwnerName = user.Name
+	}
+
 	// 消息存储在数据库
 	if err := dataCenter.Save(requestMessage, *session); err != nil {
 		return nil
@@ -105,13 +110,14 @@ func (dataCenter *DataCenterManager) UpdateOrCreateSession(requestMessage messag
 	var session *Session
 	var err error
 
-	fmt.Println("requestMessage.Scope:", requestMessage.Scope)
 	session, err = getSessionwithScope(requestMessage.Scope)
 
 	if err != nil {
 		session, err = ManagerEnv.SessionManager.CreateSession(&Session{
 			LatestTime: time.Now(),
 			Scope: Message.Scope{
+				Stype:         requestMessage.Scope.Stype,
+				RoomID:        requestMessage.Scope.RoomID,
 				OwnerID:       requestMessage.Scope.OwnerID,
 				DestinationID: requestMessage.Scope.DestinationID,
 			},
@@ -124,22 +130,22 @@ func (dataCenter *DataCenterManager) UpdateOrCreateSession(requestMessage messag
 }
 
 func (dataCenter *DataCenterManager) GetMessages(id string) ([]message.RequestMessage, error) {
-	fmt.Println("GetMessages:", id)
 	var messages []message.RequestMessage
 
 	if err := ManagerEnv.DB.Where("session_id = ?", id).Find(&messages).Error; err != nil {
 		return nil, err
 	}
 
-	for _, message := range messages {
-		user, err := ManagerEnv.UserManager.GetUser(message.OwnerID, "id")
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			message.OwnerName = user.Name
-		}
-	}
 	return messages, nil
+
+	// for _, message := range messages {
+	// 	user, err := ManagerEnv.UserManager.GetUser(message.OwnerID, "id")
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 	} else {
+	// 		message.OwnerName = user.Name
+	// 	}
+	// }
 }
 
 func (dataCenter *DataCenterManager) Distribution(msg Message.RequestMessage) error {
@@ -175,8 +181,15 @@ func (dataCenter *DataCenterManager) Save(message Message.RequestMessage, sessio
 
 func getSessionwithScope(scope Message.Scope) (*Session, error) {
 	var session Session
-	if err := ManagerEnv.DB.Where("owner_id = ? AND destination_id = ?", scope.OwnerID, scope.DestinationID).Find(&session).Error; err != nil {
-		return nil, err
+
+	if scope.RoomID != "" {
+		if err := ManagerEnv.DB.Where("owner_id = ? AND destination_id = ?", scope.OwnerID, scope.DestinationID).Find(&session).Error; err != nil {
+			return nil, err
+		}
+	} else {
+		if err := ManagerEnv.DB.Where("owner_id = ? AND destination_id = ? AND room_id = ?", scope.OwnerID, scope.DestinationID, session.RoomID).Find(&session).Error; err != nil {
+			return nil, err
+		}
 	}
 	return &session, nil
 }

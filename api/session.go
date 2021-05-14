@@ -11,6 +11,7 @@ import (
 
 func ListSessions(c *gin.Context) {
 	id := c.GetString("userID")
+
 	sessions, err := models.ManagerEnv.SessionManager.ListSessions(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -18,6 +19,7 @@ func ListSessions(c *gin.Context) {
 		})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"sessions": sessions,
 	})
@@ -63,12 +65,12 @@ func GetSession(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
-	} else {
-		c.JSON(http.StatusOK, gin.H{
-			"messages": messages,
-		})
 		return
 	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"messages": messages,
+	})
 }
 
 func DeleteSession(c *gin.Context) {

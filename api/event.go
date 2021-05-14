@@ -10,13 +10,16 @@ import (
 
 func GetMessages(c *gin.Context) {
 	id := c.Param("id")
-	if messagesInfos, err := models.ManagerEnv.DataCenterManager.GetMessages(id); err != nil {
+
+	messagesInfos, err := models.ManagerEnv.DataCenterManager.GetMessages(id)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
-	} else {
-		c.JSON(http.StatusOK, messagesInfos)
+		return
 	}
+
+	c.JSON(http.StatusOK, messagesInfos)
 }
 
 func HandlerMessage(c *gin.Context) {
@@ -26,6 +29,7 @@ func HandlerMessage(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
 
 	if err := models.ManagerEnv.DataCenterManager.HandlerMessage(requestMessage); err != nil {
@@ -37,10 +41,13 @@ func HandlerMessage(c *gin.Context) {
 
 func HandlerEvent(c *gin.Context) {
 	id := c.GetString("userID")
+
 	if err := models.ManagerEnv.WebsocketManager.InitWs(c, id); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
+
 	c.JSON(http.StatusOK, nil)
 }

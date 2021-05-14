@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"we-chat/models"
 
@@ -12,36 +11,35 @@ func Login(c *gin.Context) {
 	var user models.User
 
 	if err := c.ShouldBind(&user); err != nil {
-		c.JSON(http.StatusBadRequest, err)
+		jsonResult(c, http.StatusBadRequest, err)
 		return
 	}
 
 	u, token, err := models.ManagerEnv.UserManager.Login(c, &user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		jsonResult(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	c.Writer.Header().Set("token", token)
-	c.JSON(http.StatusOK, u)
+	jsonResult(c, http.StatusOK, u)
+	return
 }
 
 func Register(c *gin.Context) {
 	var user models.User
 	if err := c.ShouldBind(&user); err != nil {
-		c.JSON(http.StatusBadRequest, err)
+		jsonResult(c, http.StatusBadRequest, err)
 		return
 	}
 
-	fmt.Println("created user", user.Name)
-	err := models.ManagerEnv.UserManager.Register(&user)
-	fmt.Println("created user error:", err)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+	if err := models.ManagerEnv.UserManager.Register(&user); err != nil {
+		jsonResult(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, user)
+
+	jsonResult(c, http.StatusOK, user)
+	return
 }
 
 func GetUser(c *gin.Context) {
@@ -50,11 +48,13 @@ func GetUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, "id must not be empty")
 		return
 	}
+
 	user, err := models.ManagerEnv.UserManager.GetUser(id, "id")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, user)
 }
 
@@ -64,6 +64,7 @@ func SearchUsers(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, "name must not be empty")
 		return
 	}
+
 	users, err := models.ManagerEnv.UserManager.SearchUsers(name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -79,6 +80,7 @@ func GetFriends(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
+
 	users, err := models.ManagerEnv.UserManager.ListFriends(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -98,9 +100,10 @@ func AddFriend(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
-	} else {
-		c.JSON(http.StatusOK, nil)
+		return
 	}
+
+	c.JSON(http.StatusOK, nil)
 }
 
 func DeleteFriend(c *gin.Context) {
@@ -116,5 +119,6 @@ func DeleteFriend(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, nil)
 }

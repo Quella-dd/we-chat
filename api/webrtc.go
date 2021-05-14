@@ -21,6 +21,7 @@ func handlerRTCRequest(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, eventID)
 		return
 	}
+
 	if err := models.HandlerRTCRequest(c, eventID, status); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 	}
@@ -32,6 +33,7 @@ func hangDownRTCRequest(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, eventID)
 		return
 	}
+
 	if err := models.HangDownRTCRequest(c, eventID); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 	}

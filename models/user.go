@@ -1,12 +1,11 @@
 package models
 
 import (
-	"database/sql/driver"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"time"
+	"we-chat/common"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -24,22 +23,11 @@ type User struct {
 	PassWord  string `form:"password"`
 	Email     string `form:"email"`
 	Validate  bool
-	Relations RelationStruct `gorm:"type:json"`
+	Relations common.RelationStruct `gorm:"type:json"`
 }
 
 type AddUserOptions struct {
 	Content string `form:"content"`
-}
-
-type RelationStruct []string
-
-func (u RelationStruct) Value() (driver.Value, error) {
-	b, err := json.Marshal(u)
-	return string(b), err
-}
-
-func (u *RelationStruct) Scan(input interface{}) error {
-	return json.Unmarshal(input.([]byte), u)
 }
 
 func (*UserManager) Login(c *gin.Context, u *User) (*User, string, error) {
@@ -60,8 +48,9 @@ func (*UserManager) Login(c *gin.Context, u *User) (*User, string, error) {
 
 func (m *UserManager) Register(user *User) error {
 	if _, err := m.GetUser(user.Name, "name"); err == nil {
-		return fmt.Errorf("username: %+v must not be duplicate", user.Name)
+		return errors.New("user name be duplicate")
 	}
+
 	// TODO: 用户密码使用MD5进行加密并保存在数据库中
 	if err := ManagerEnv.DB.Create(user).Error; err != nil {
 		return err
@@ -72,18 +61,22 @@ func (m *UserManager) Register(user *User) error {
 func (*UserManager) ListUsers() ([]User, error) {
 	var users []User
 	err := ManagerEnv.DB.Find(&users).Error
+
 	if err != nil {
 		return nil, err
 	}
+
 	return users, nil
 }
 
 func (m *UserManager) GetUser(search, option string) (*User, error) {
 	var user User
+
 	query := fmt.Sprintf("%s = ?", option)
 	if err := ManagerEnv.DB.Where(query, search).First(&user).Error; err != nil {
 		return nil, err
 	}
+
 	return &user, nil
 }
 
@@ -128,12 +121,14 @@ func (m *UserManager) DeleteFriend(id, friendID string) error {
 	if _, err := m.GetUser(friendID, "id"); err != nil {
 		return errors.New("user not found")
 	}
-	for i, v := range self.Relations {
-		if v == friendID {
-			self.Relations = append(self.Relations[:i], self.Relations[i+1:]...)
+
+	var relations common.RelationStruct
+	for _, v := range self.Relations {
+		if v != friendID {
+			relations = append(relations, v)
 		}
 	}
-	return ManagerEnv.DB.Model(&self).Update("relations", self.Relations).Error
+	return ManagerEnv.DB.Model(&self).Update("relations", relations).Error
 }
 
 func (m *UserManager) AckRequet(id, friendID string) error {

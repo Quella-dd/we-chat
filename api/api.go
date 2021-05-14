@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -40,8 +41,8 @@ var routers = []*router{
 	{method: http.MethodGet, path: "/group/:id", handler: GetGroup},
 	{method: http.MethodDelete, path: "/group/:id", handler: DeleteGroup},
 
-	{method: http.MethodPost, path: "/join/:name/group/:id", handler: JoinGroup},
-	{method: http.MethodPost, path: "/leave/:name/group/:id/", handler: LeaveGroup},
+	{method: http.MethodPost, path: "/join/group/:id", handler: JoinGroup},
+	{method: http.MethodPost, path: "/leave/group/:id", handler: LeaveGroup},
 
 	// TODO: 可以采取多重索引来加速message的查询
 	{method: http.MethodGet, path: "/sessions", handler: ListSessions},
@@ -62,7 +63,7 @@ var routers = []*router{
 
 func InitRouter() {
 	engine := gin.Default()
-	engine.Use()
+
 	for _, router := range routers {
 		engine.Handle(router.method, router.path, validateHandler(router.handler))
 	}
@@ -101,4 +102,16 @@ func validateHandler(f gin.HandlerFunc) gin.HandlerFunc {
 	}
 }
 
-// TODO: 封装error包, 用来wrap error
+func jsonResult(c *gin.Context, code int, o interface{}) {
+	w := c.Writer
+
+	w.WriteHeader(code)
+
+	if v, ok := o.(error); ok {
+		w.Write([]byte(v.Error()))
+	} else {
+		buf, _ := json.Marshal(o)
+		w.Write(buf)
+	}
+	return
+}

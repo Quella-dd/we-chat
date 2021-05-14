@@ -14,10 +14,13 @@ func ListRequests(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
+
 	requests, err := models.ManagerEnv.RequestManager.ListUserRequest(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
+
 	c.JSON(http.StatusOK, requests)
 }
 
@@ -27,9 +30,9 @@ func DeleteRequest(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err,
 		})
-	} else {
-		c.JSON(http.StatusOK, nil)
+		return
 	}
+	c.JSON(http.StatusOK, nil)
 }
 
 func AckRequest(c *gin.Context) {
@@ -40,6 +43,6 @@ func AckRequest(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
-	models.ManagerEnv.RequestManager.AckRequest(requestID, requestUserID)
 
+	models.ManagerEnv.RequestManager.AckRequest(requestID, requestUserID)
 }

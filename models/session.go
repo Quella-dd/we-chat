@@ -62,14 +62,15 @@ func (s *SessionManager) CreateSession(session *Session) (*Session, error) {
 			}
 			return session, nil
 		}
-	} else {
-		if err := ManagerEnv.DB.Where("owner_id = ? AND destination_id = ? AND room_id = ?", session.OwnerID, session.DestinationID, session.RoomID).Find(&resultSession).Error; err != nil {
-			if err := ManagerEnv.DB.Create(session).Error; err != nil {
-				return nil, err
-			}
-			return session, nil
-		}
 	}
+
+	if err := ManagerEnv.DB.Where("owner_id = ? AND destination_id = ? AND room_id = ?", session.OwnerID, session.DestinationID, session.RoomID).Find(&resultSession).Error; err != nil {
+		if err := ManagerEnv.DB.Create(session).Error; err != nil {
+			return nil, err
+		}
+		return session, nil
+	}
+
 	return &resultSession, nil
 }
 

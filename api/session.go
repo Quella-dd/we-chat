@@ -66,11 +66,11 @@ func GetSession(c *gin.Context) {
 			"error": err.Error(),
 		})
 		return
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"messages": messages,
+		})
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"messages": messages,
-	})
 }
 
 func DeleteSession(c *gin.Context) {

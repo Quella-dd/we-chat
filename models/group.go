@@ -30,9 +30,13 @@ func (*GroupManager) ListGroups(userID string) ([]Group, error) {
 	return groups, nil
 }
 
-func (*GroupManager) CreateGroup(userID string, r *Group) error {
+func (*GroupManager) CreateGroup(userID string, r *Group) (*Group, error) {
 	r.ManagerID = userID
-	return ManagerEnv.DB.Create(r).Error
+
+	if err := ManagerEnv.DB.Create(&r).Error; err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 func (*GroupManager) UpdateGroup(group *Group) error {

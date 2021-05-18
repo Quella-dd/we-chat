@@ -32,12 +32,13 @@ func CreateGroup(c *gin.Context) {
 
 	group.Childes = append(group.Childes, userID)
 
-	if err := models.ManagerEnv.GroupManager.CreateGroup(userID, &group); err != nil {
+	if g, err := models.ManagerEnv.GroupManager.CreateGroup(userID, &group); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
-	}
+	} else {
+		c.JSON(http.StatusOK, g)
 
-	c.JSON(http.StatusOK, nil)
+	}
 }
 
 // update group.Name or group.Description

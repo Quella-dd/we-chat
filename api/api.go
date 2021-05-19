@@ -32,6 +32,7 @@ var routers = []*router{
 	{method: http.MethodDelete, path: "/friend/:id", handler: DeleteFriend},
 
 	{method: http.MethodGet, path: "/requests", handler: ListRequests},
+	{method: http.MethodGet, path: "/request/:id", handler: GetRequest},
 	{method: http.MethodPost, path: "/request/:id", handler: AckRequest},
 	{method: http.MethodDelete, path: "/request/:id", handler: DeleteRequest},
 

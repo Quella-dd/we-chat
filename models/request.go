@@ -20,6 +20,12 @@ type Request struct {
 	Status  bool
 }
 
+type RequestInfo struct {
+	*User
+	Content string
+	Status  bool
+}
+
 func (m *RequestManager) CreateRequest(id, addID, content string) error {
 	var request Request
 	request.UserID = id
@@ -35,6 +41,23 @@ func (m *RequestManager) GetRequest(id string) (*Request, error) {
 		return nil, err
 	}
 	return &request, nil
+}
+
+func (m *RequestManager) GetRequestInfo(id string) (*RequestInfo, error) {
+	request, err := m.GetRequest(id)
+	if err != nil {
+		return nil, err
+	}
+	user, err := ManagerEnv.UserManager.GetUser(request.UserID, "id")
+	if err != nil {
+		return nil, err
+	}
+
+	return &RequestInfo{
+		User:    user,
+		Content: request.Content,
+		Status:  request.Status,
+	}, nil
 }
 
 func (m *RequestManager) ListUserRequest(id string) ([]Request, error) {

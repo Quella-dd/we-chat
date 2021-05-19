@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"we-chat/models"
 
@@ -33,6 +34,22 @@ func DeleteRequest(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, nil)
+}
+
+func GetRequest(c *gin.Context) {
+	requestID := c.Param("id")
+	if requestID == "" {
+		c.JSON(http.StatusBadRequest, errors.New("bad query"))
+		return
+	}
+
+	requestInfo, err := models.ManagerEnv.RequestManager.GetRequestInfo(requestID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, requestInfo)
 }
 
 func AckRequest(c *gin.Context) {

@@ -21,9 +21,8 @@ type Request struct {
 }
 
 type RequestInfo struct {
-	*User
-	Content string
-	Status  bool
+	User    User
+	Request Request
 }
 
 func (m *RequestManager) CreateRequest(id, addID, content string) error {
@@ -54,9 +53,8 @@ func (m *RequestManager) GetRequestInfo(id string) (*RequestInfo, error) {
 	}
 
 	return &RequestInfo{
-		User:    user,
-		Content: request.Content,
-		Status:  request.Status,
+		User:    *user,
+		Request: *request,
 	}, nil
 }
 

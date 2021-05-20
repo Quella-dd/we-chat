@@ -2,10 +2,12 @@ package api
 
 import (
 	"net/http"
+	"we-chat/event"
 	"we-chat/message"
 	"we-chat/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 func GetMessages(c *gin.Context) {
@@ -42,12 +44,26 @@ func HandlerMessage(c *gin.Context) {
 func HandlerEvent(c *gin.Context) {
 	id := c.GetString("userID")
 
-	if err := models.ManagerEnv.WebsocketManager.InitWs(c, id); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+	var (
+		upgrader = websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		}
+	)
+
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, nil)
+	eventCh := event.Sub(id)
+
+	for {
+		select {
+		case evt := <-eventCh:
+			ws.WriteJSON(evt)
+		}
+	}
 }

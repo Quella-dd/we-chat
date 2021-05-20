@@ -56,6 +56,15 @@ var routers = []*router{
 	{method: http.MethodGet, path: "/messages/:id", handler: GetMessages},
 	{method: http.MethodPost, path: "/sendMessage", handler: HandlerMessage},
 
+	{method: http.MethodGet, path: "/moments", handler: ListMoments},
+	{method: http.MethodGet, path: "/moment/:id", handler: GetMoment},
+	{method: http.MethodPost, path: "/moment", handler: CreateMoment},
+	{method: http.MethodDelete, path: "/moment/:id", handler: DeleteMoment},
+	{method: http.MethodPut, path: "/moment/:id", handler: UpdateMoment},
+
+	{method: http.MethodPost, path: "/comment", handler: CreateComment},
+	{method: http.MethodDelete, path: "/comment/:id", handler: DeleteComment},
+
 	// TODO
 	{method: http.MethodPost, path: "/RTCRequest", handler: sendRTCRequest},
 	{method: http.MethodPost, path: "/RTCRequest/:id/", handler: handlerRTCRequest},
@@ -77,6 +86,12 @@ func validateHandler(f gin.HandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !strings.Contains(c.Request.URL.Path, "/login") && !strings.Contains(c.Request.URL.Path, "/register") {
 			tokenAuth := c.GetHeader("token")
+
+			if strings.Contains(c.Request.URL.Path, "/event") {
+				tokenAuth = c.Query("token")
+				fmt.Println("++++++++++++++++++++ ws authToken:", tokenAuth)
+			}
+
 			if tokenAuth == "" {
 				c.JSON(http.StatusUnauthorized, gin.H{
 					"error": errors.New("http.StatusUnauthorized"),

@@ -21,6 +21,8 @@ type Manager struct {
 	*DataCenterManager
 	*SessionManager
 	*RequestManager
+	*MomentManager
+	*CommonManager
 }
 
 type ManagerIni struct {
@@ -53,6 +55,8 @@ func InitManage() {
 		//DataCenterManager: NewDataCenterManager(),
 		SessionManager: NewSessionManager(),
 		RequestManager: NewRequestManager(),
+		MomentManager:  NewMomentManager(),
+		CommonManager:  NewCommonManager(),
 	}
 }
 
@@ -106,6 +110,8 @@ func initDataTable() {
 	ManagerEnv.DB.AutoMigrate(&Message.RequestMessage{})
 	ManagerEnv.DB.AutoMigrate(&Session{})
 	ManagerEnv.DB.AutoMigrate(&Request{})
+	ManagerEnv.DB.AutoMigrate(&Moment{})
+	ManagerEnv.DB.AutoMigrate(&Comment{})
 }
 
 func init() {

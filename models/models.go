@@ -44,11 +44,11 @@ type Redis struct {
 	Password string
 }
 
-var ManagerEnv *Manager
+var ManagerEnv Manager
 var ManagerConfig ManagerIni
 
 func InitManage() {
-	ManagerEnv = &Manager{
+	ManagerEnv = Manager{
 		UserManager:      NewUserManager(),
 		GroupManager:     NewGroupManager(),
 		WebsocketManager: NewWebSocketManager(),

@@ -12,7 +12,7 @@ import (
 func ListSessions(c *gin.Context) {
 	id := c.GetString("userID")
 
-	sessions, err := models.ManagerEnv.SessionManager.ListSessions(id)
+	sessions, err := GE.SessionManager.ListSessions(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -52,7 +52,7 @@ func CreateSession(c *gin.Context) {
 
 	session.LatestTime = time.Now()
 
-	if _, err := models.ManagerEnv.SessionManager.CreateSession(&session); err != nil {
+	if _, err := GE.SessionManager.CreateSession(&session); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -61,7 +61,7 @@ func CreateSession(c *gin.Context) {
 
 func GetSession(c *gin.Context) {
 	id := c.Param("id")
-	if messages, err := models.ManagerEnv.SessionManager.GetSession(id); err != nil {
+	if messages, err := GE.SessionManager.GetSession(id); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -75,7 +75,7 @@ func GetSession(c *gin.Context) {
 
 func DeleteSession(c *gin.Context) {
 	id := c.Param("id")
-	if err := models.ManagerEnv.SessionManager.DeleteSession(id); err != nil {
+	if err := GE.SessionManager.DeleteSession(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

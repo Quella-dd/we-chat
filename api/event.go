@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"we-chat/event"
 	"we-chat/message"
-	"we-chat/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -13,7 +12,7 @@ import (
 func GetMessages(c *gin.Context) {
 	id := c.Param("id")
 
-	messagesInfos, err := models.ManagerEnv.DataCenterManager.GetMessages(id)
+	messagesInfos, err := GE.DataCenterManager.GetMessages(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -34,7 +33,7 @@ func HandlerMessage(c *gin.Context) {
 		return
 	}
 
-	if err := models.ManagerEnv.DataCenterManager.HandlerMessage(requestMessage); err != nil {
+	if err := GE.DataCenterManager.HandlerMessage(requestMessage); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

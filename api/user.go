@@ -15,7 +15,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	u, token, err := models.ManagerEnv.UserManager.Login(c, &user)
+	u, token, err := GE.UserManager.Login(c, &user)
 	if err != nil {
 		jsonResult(c, http.StatusInternalServerError, err)
 		return
@@ -33,7 +33,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	if err := models.ManagerEnv.UserManager.Register(&user); err != nil {
+	if err := GE.UserManager.Register(&user); err != nil {
 		jsonResult(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -49,7 +49,7 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
-	user, err := models.ManagerEnv.UserManager.GetUser(id, "id")
+	user, err := GE.UserManager.GetUser(id, "id")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -65,7 +65,7 @@ func SearchUsers(c *gin.Context) {
 		return
 	}
 
-	users, err := models.ManagerEnv.UserManager.SearchUsers(name)
+	users, err := GE.UserManager.SearchUsers(name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -81,7 +81,7 @@ func GetFriends(c *gin.Context) {
 		return
 	}
 
-	users, err := models.ManagerEnv.UserManager.ListFriends(id)
+	users, err := GE.UserManager.ListFriends(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -96,7 +96,7 @@ func AddFriend(c *gin.Context) {
 	var option models.AddUserOptions
 	_ = c.ShouldBind(&option)
 
-	if err := models.ManagerEnv.UserManager.AddFriend(id, addID, option.Content); err != nil {
+	if err := GE.UserManager.AddFriend(id, addID, option.Content); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -114,7 +114,7 @@ func DeleteFriend(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
-	err := models.ManagerEnv.UserManager.DeleteFriend(requestID, destinationID)
+	err := GE.UserManager.DeleteFriend(requestID, destinationID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return

@@ -44,10 +44,11 @@ func NewWebSocketManager() *WebsocketManager {
 
 type MessageEvt struct {
 	Content interface{}
+	Topic   string
 }
 
 func (e MessageEvt) Type() string {
-	return "message-evt"
+	return "message"
 }
 
 func (m *WebsocketManager) SendUserMessage(msg message.RequestMessage, destinationID string) error {
@@ -89,15 +90,16 @@ func (m *WebsocketManager) SendUserMessage(msg message.RequestMessage, destinati
 	// }
 
 	event.Pub(&MessageEvt{
+		Topic:   "message",
 		Content: msg,
 	})
 
 	// 如果用户离线，将message保存到离线数据库， redis列表的Key userID 作为唯一主键(list)
 	// 当用户再次上线的时候，执行
 	// 3、 应该不需要将消息通过ws发送给客户端， 应该将消息包装为一个event发送给客户端
-	if err := ManagerEnv.DataCenterManager.Redis.RPush(destinationID, msg).Err(); err != nil {
-		return err
-	}
+	// if err := ManagerEnv.DataCenterManager.Redis.RPush(destinationID, msg).Err(); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }

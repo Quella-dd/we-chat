@@ -15,7 +15,7 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
-	err = models.ManagerEnv.CommonManager.Create(comment)
+	err = GE.CommonManager.Create(comment)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -25,7 +25,7 @@ func CreateComment(c *gin.Context) {
 
 func DeleteComment(c *gin.Context) {
 	id := c.Param("id")
-	err := models.ManagerEnv.CommonManager.Delete(id)
+	err := GE.CommonManager.Delete(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return

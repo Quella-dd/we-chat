@@ -9,7 +9,7 @@ import (
 
 func ListMoments(c *gin.Context) {
 	userID := c.GetString("userID")
-	moments, err := models.ManagerEnv.MomentManager.List(userID)
+	moments, err := GE.MomentManager.List(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error)
 		return
@@ -19,7 +19,7 @@ func ListMoments(c *gin.Context) {
 
 func GetMoment(c *gin.Context) {
 	id := c.Param("id")
-	moment, err := models.ManagerEnv.MomentManager.Get(id)
+	moment, err := GE.MomentManager.Get(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error)
 		return
@@ -36,7 +36,7 @@ func CreateMoment(c *gin.Context) {
 		return
 	}
 
-	err = models.ManagerEnv.MomentManager.Create(moment)
+	err = GE.MomentManager.Create(moment)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
@@ -46,7 +46,7 @@ func CreateMoment(c *gin.Context) {
 
 func DeleteMoment(c *gin.Context) {
 	id := c.Param("id")
-	err := models.ManagerEnv.MomentManager.Delete(id)
+	err := GE.MomentManager.Delete(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
@@ -64,7 +64,7 @@ func UpdateMoment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
-	err = models.ManagerEnv.MomentManager.Update(id, userID, spec)
+	err = GE.MomentManager.Update(id, userID, spec)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return

@@ -7,12 +7,14 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
 	"we-chat/models"
 
 	"github.com/dgrijalva/jwt-go"
-
 	"github.com/gin-gonic/gin"
 )
+
+var GE = &models.ManagerEnv
 
 type router struct {
 	method  string
@@ -89,7 +91,6 @@ func validateHandler(f gin.HandlerFunc) gin.HandlerFunc {
 
 			if strings.Contains(c.Request.URL.Path, "/event") {
 				tokenAuth = c.Query("token")
-				fmt.Println("++++++++++++++++++++ ws authToken:", tokenAuth)
 			}
 
 			if tokenAuth == "" {

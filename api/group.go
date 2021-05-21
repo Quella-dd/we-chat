@@ -11,7 +11,7 @@ import (
 // API Group
 func ListGroups(c *gin.Context) {
 	userID := c.GetString("userID")
-	groups, err := models.ManagerEnv.GroupManager.ListGroups(userID)
+	groups, err := GE.GroupManager.ListGroups(userID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -32,7 +32,7 @@ func CreateGroup(c *gin.Context) {
 
 	group.Childes = append(group.Childes, userID)
 
-	if g, err := models.ManagerEnv.GroupManager.CreateGroup(userID, &group); err != nil {
+	if g, err := GE.GroupManager.CreateGroup(userID, &group); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	} else {
@@ -48,7 +48,7 @@ func UpdateGroup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, nil)
 	}
 
-	err := models.ManagerEnv.GroupManager.UpdateGroup(group)
+	err := GE.GroupManager.UpdateGroup(group)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -61,7 +61,7 @@ func GetGroup(c *gin.Context) {
 	_, info := c.GetQuery("info")
 
 	if info {
-		groupInfo, err := models.ManagerEnv.GroupManager.GetGroupInfo(id, info)
+		groupInfo, err := GE.GroupManager.GetGroupInfo(id, info)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err)
 			return
@@ -70,7 +70,7 @@ func GetGroup(c *gin.Context) {
 		return
 	}
 
-	group, err := models.ManagerEnv.GroupManager.GetGroup(id)
+	group, err := GE.GroupManager.GetGroup(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -80,7 +80,7 @@ func GetGroup(c *gin.Context) {
 
 func DeleteGroup(ctx *gin.Context) {
 	id := ctx.Param("id")
-	err := models.ManagerEnv.GroupManager.DeleteGroup(id)
+	err := GE.GroupManager.DeleteGroup(id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err)
 	}
@@ -99,7 +99,7 @@ func JoinGroup(c *gin.Context) {
 		return
 	}
 
-	if err := models.ManagerEnv.UserManager.JoinGroup(id, groupID, selections.UserID); err != nil {
+	if err := GE.UserManager.JoinGroup(id, groupID, selections.UserID); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 	}
 }
@@ -117,7 +117,7 @@ func LeaveGroup(c *gin.Context) {
 		return
 	}
 
-	if err := models.ManagerEnv.UserManager.LeaveGroup(id, groupID, selections.UserID); err != nil {
+	if err := GE.UserManager.LeaveGroup(id, groupID, selections.UserID); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 	}
 }

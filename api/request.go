@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"net/http"
-	"we-chat/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +15,7 @@ func ListRequests(c *gin.Context) {
 		return
 	}
 
-	requests, err := models.ManagerEnv.RequestManager.ListUserRequest(id)
+	requests, err := GE.RequestManager.ListUserRequest(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -27,7 +26,7 @@ func ListRequests(c *gin.Context) {
 
 func DeleteRequest(c *gin.Context) {
 	id := c.Param("id")
-	if err := models.ManagerEnv.RequestManager.DeleteRequest(id); err != nil {
+	if err := GE.RequestManager.DeleteRequest(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err,
 		})
@@ -43,7 +42,7 @@ func GetRequest(c *gin.Context) {
 		return
 	}
 
-	requestInfo, err := models.ManagerEnv.RequestManager.GetRequestInfo(requestID)
+	requestInfo, err := GE.RequestManager.GetRequestInfo(requestID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -61,5 +60,5 @@ func AckRequest(c *gin.Context) {
 		return
 	}
 
-	models.ManagerEnv.RequestManager.AckRequest(requestID, requestUserID)
+	GE.RequestManager.AckRequest(requestID, requestUserID)
 }
